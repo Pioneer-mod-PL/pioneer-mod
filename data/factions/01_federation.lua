@@ -1,12 +1,12 @@
-local f = Faction:new('Federation')
-	:description_short('The historical birthplace of humankind')
-	:description([[Sol is a fine joint]])
+local f = Faction:new('Federacja')
+	:description_short('Historyczna kolebka ludzkości')
+	:description([[Słońce jest dobrem wspólnym]])
 	:govtype('EARTHDEMOC')
 	:homeworld(0,0,0,0,4)
 	:foundingDate(3050.0)
 	:expansionRate(1.0)
-	:military_name('United Nations Space Force')
-	:police_name('Police')
+	:military_name('Flota Zjednoczonych Narodów')
+	:police_name('Policja')
 	:colour(0.4,0.4,1.0)
 
 f:illegal_goods_probability('ANIMAL_MEAT',75)	-- fed/cis
@@ -17,4 +17,4 @@ f:illegal_goods_probability('NERVE_GAS',100)--fed/cis
 f:illegal_goods_probability('NARCOTICS',100)--fed
 f:illegal_goods_probability('SLAVES',100)--fed/cis
 
-f:add_to_factions('Federation')
+f:add_to_factions('Federacja')
