@@ -2,7 +2,7 @@
 -- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 local s = CustomSystem:new('Epsilon Eridani', { 'STAR_K' })
-	:govtype('CISLIBDEM')
+	:govtype('CISSOCDEM')
 	:short_desc('Pierwsza pozaziemska kolonia. Przemysłowy świat z lokalnymi formami życia.')
 	:long_desc([[Epsilon Eridani był pierwszym systemem (nie licząc Układu Słonecznego) skolonizowanym przez ludzi. W roku 2279 założono kolonie na New Hope, planecie zdolnej do podtrzymania życia. Habitaty z 1520 kolonistami zakończyły swą przed-nadprzestrzenną podroż 10.7 lat świetlnych od Słońca, w zaledwie 25 lat.
 Masowa emigracja z Ziemi w 27 wieku, doprowadziła do eksplozji demograficznej i Epsilon Eridani jest dziś jednym z najbardziej zaludnionych systemów.
