@@ -60,7 +60,6 @@ class Game;
 class Pi {
 public:
 	static void Init();
-	static void RedirectStdio();
 	static void InitGame();
 	static void StarportStart(Uint32 starport);
 	static void StartGame();
@@ -97,9 +96,14 @@ public:
 	}
 	static void SetMouseGrab(bool on);
 	static void BoinkNoise();
-	static float CalcHyperspaceRange(int hyperclass, int total_mass_in_tonnes);
+	static float CalcHyperspaceRangeMax(int hyperclass, int total_mass_in_tonnes);
+	static float CalcHyperspaceRange(int hyperclass, float total_mass_in_tonnes, int fuel);
+	static float CalcHyperspaceDuration(int hyperclass, int total_mass_in_tonnes, float dist);
+	static float CalcHyperspaceFuelOut(int hyperclass, float dist, float hyperspace_range_max);
 	static void Message(const std::string &message, const std::string &from = "", enum MsgLevel level = MSG_NORMAL);
 	static std::string GetSaveDir();
+
+	static const char SAVE_DIR_NAME[];
 
 	static sigc::signal<void, SDL_keysym*> onKeyPress;
 	static sigc::signal<void, SDL_keysym*> onKeyRelease;

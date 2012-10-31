@@ -28,6 +28,7 @@
 #include "LuaConsole.h"
 #include "LuaConstants.h"
 #include "LuaEngine.h"
+#include "LuaFaction.h"
 #include "LuaFileSystem.h"
 #include "LuaEquipType.h"
 #include "LuaFormat.h"
@@ -85,7 +86,8 @@
 #include "ModManager.h"
 #include "graphics/Light.h"
 #include "gui/Gui.h"
-#include <fstream>
+#include <algorithm>
+#include <sstream>
 
 float Pi::gameTickAlpha;
 int Pi::scrWidth;
@@ -196,6 +198,7 @@ static void LuaInit()
 	LuaShipType::RegisterClass();
 	LuaEquipType::RegisterClass();
 	LuaRand::RegisterClass();
+	LuaFaction::RegisterClass();
 
 	LuaObject<LuaChatForm>::RegisterClass();
 
@@ -242,51 +245,25 @@ static void LuaInitGame() {
 	LuaEvent::Clear();
 }
 
+const char Pi::SAVE_DIR_NAME[] = "savefiles";
+
 std::string Pi::GetSaveDir()
 {
-	return FileSystem::GetUserDir("savefiles");
-}
-
-void Pi::RedirectStdio()
-{
-	std::string stdout_file = FileSystem::JoinPath(FileSystem::GetUserDir(), "stdout.txt");
-	std::string stderr_file = FileSystem::JoinPath(FileSystem::GetUserDir(), "stderr.txt");
-
-	FILE *f;
-
-	f = freopen(stdout_file.c_str(), "w", stdout);
-	if (!f)
-		f = fopen(stdout_file.c_str(), "w");
-	if (!f)
-		fprintf(stderr, "ERROR: Couldn't redirect stdout to '%s': %s\n", stdout_file.c_str(), strerror(errno));
-	else {
-		setvbuf(f, 0, _IOLBF, BUFSIZ);
-		*stdout = *f;
-	}
-
-	f = freopen(stderr_file.c_str(), "w", stderr);
-	if (!f)
-		f = fopen(stderr_file.c_str(), "w");
-	if (!f)
-		fprintf(stderr, "ERROR: Couldn't redirect stderr to '%s': %s\n", stderr_file.c_str(), strerror(errno));
-	else {
-		setvbuf(f, 0, _IOLBF, BUFSIZ);
-		*stderr = *f;
-	}
+	return FileSystem::JoinPath(FileSystem::GetUserDir(), Pi::SAVE_DIR_NAME);
 }
 
 void Pi::Init()
 {
 	FileSystem::Init();
-	FileSystem::rawFileSystem.MakeDirectory(FileSystem::GetUserDir());
+	FileSystem::userFiles.MakeDirectory(""); // ensure the config directory exists
 
-	ModManager::Init();
-
-	Pi::config = new GameConfig(FileSystem::JoinPath(FileSystem::GetUserDir(), "config.ini"));
+	Pi::config = new GameConfig();
 	KeyBindings::InitBindings();
 
 	if (config->Int("RedirectStdio"))
-		RedirectStdio();
+		OS::RedirectStdio();
+
+	ModManager::Init();
 
 	if (!Lang::LoadStrings(config->String("Lang")))
 		abort();
@@ -317,9 +294,15 @@ void Pi::Init()
 
 	Pi::renderer = Graphics::Init(videoSettings);
 	{
-		std::ofstream out;
-		out.open((FileSystem::JoinPath(FileSystem::GetUserDir(), "opengl.txt")).c_str());
-		renderer->PrintDebugInfo(out);
+		std::ostringstream buf;
+		renderer->PrintDebugInfo(buf);
+
+		FILE *f = FileSystem::userFiles.OpenWriteStream("opengl.txt", FileSystem::FileSourceFS::WRITE_TEXT);
+		if (!f)
+			fprintf(stderr, "Could not open 'opengl.txt'\n");
+		const std::string &s = buf.str();
+		fwrite(s.c_str(), 1, s.size(), f);
+		fclose(f);
 	}
 
 	OS::LoadWindowIcon();
@@ -630,10 +613,10 @@ void Pi::HandleEvents()
 									Pi::cpan->MsgLog()->Message("", Lang::CANT_SAVE_IN_HYPERSPACE);
 
 								else {
-									std::string name = FileSystem::JoinPath(GetSaveDir(), "_quicksave");
+									const std::string name = "_quicksave";
 									GameSaver saver(Pi::game);
 									if (saver.SaveToFile(name))
-										Pi::cpan->MsgLog()->Message("", Lang::GAME_SAVED_TO+name);
+										Pi::cpan->MsgLog()->Message("", Lang::GAME_SAVED_TO + FileSystem::JoinPath(GetSaveDir(), name));
 								}
 							}
 							break;
@@ -722,6 +705,17 @@ void Pi::InitGame()
 {
 	// this is a bit brittle. skank may be forgotten and survive between
 	// games
+
+	//reset input states
+	keyModState = 0;
+	std::fill(keyState, keyState + COUNTOF(keyState), 0);
+	std::fill(mouseButton, mouseButton + COUNTOF(mouseButton), 0);
+	std::fill(mouseMotion, mouseMotion + COUNTOF(mouseMotion), 0);
+	for (std::vector<JoystickState>::iterator stick = joysticks.begin(); stick != joysticks.end(); ++stick) {
+		std::fill(stick->buttons.begin(), stick->buttons.end(), false);
+		std::fill(stick->hats.begin(), stick->hats.end(), 0);
+		std::fill(stick->axes.begin(), stick->axes.end(), 0.f);
+	}
 
 	Polit::Init();
 
@@ -989,13 +983,49 @@ void Pi::MainLoop()
 	}
 }
 
-float Pi::CalcHyperspaceRange(int hyperclass, int total_mass_in_tonnes)
+float Pi::CalcHyperspaceRangeMax(int hyperclass, int total_mass_in_tonnes)
 {
-	// for the sake of hyperspace range, we count ships mass as 60% of original.
-	// Brian: "The 60% value was arrived at through trial and error,
-	// to scale the entire jump range calculation after things like ship mass,
-	// cargo mass, hyperdrive class, fuel use and fun were factored in."
-	return 200.0f * hyperclass * hyperclass / (total_mass_in_tonnes * 0.6f);
+	// 400.0f is balancing parameter
+	return 400.0f * hyperclass * hyperclass / (total_mass_in_tonnes);
+}
+
+float Pi::CalcHyperspaceRange(int hyperclass, float total_mass_in_tonnes, int fuel)
+{
+	const float range_max = CalcHyperspaceRangeMax(hyperclass, total_mass_in_tonnes);
+	int fuel_required_max = CalcHyperspaceFuelOut(hyperclass, range_max, range_max);
+
+	if(fuel_required_max <= fuel)
+		return range_max;
+	else {
+		// range is proportional to fuel - use this as first guess
+		float range = range_max*fuel/fuel_required_max;
+
+		// if the range is too big due to rounding error, lower it until is is OK.
+		while(range > 0 && CalcHyperspaceFuelOut(hyperclass, range, range_max) > fuel)
+			range -= 0.05;
+
+		// range is never negative
+		range = std::max(range, 0.0f);
+		return range;
+	}
+}
+
+float Pi::CalcHyperspaceDuration(int hyperclass, int total_mass_in_tonnes, float dist)
+{
+	float hyperspace_range_max = CalcHyperspaceRangeMax(hyperclass, total_mass_in_tonnes);
+
+	// 0.45 is balancing parameter
+	return ((dist * dist * 0.45) / (hyperspace_range_max * hyperclass)) *
+			(60.0 * 60.0 * 24.0 * sqrtf(total_mass_in_tonnes));
+}
+
+float Pi::CalcHyperspaceFuelOut(int hyperclass, float dist, float hyperspace_range_max)
+{
+	int outFuelRequired = int(ceil(hyperclass*hyperclass*dist / hyperspace_range_max));
+	if (outFuelRequired > hyperclass*hyperclass) outFuelRequired = hyperclass*hyperclass;
+	if (outFuelRequired < 1) outFuelRequired = 1;
+
+	return outFuelRequired;
 }
 
 void Pi::Message(const std::string &message, const std::string &from, enum MsgLevel level)
