@@ -42,7 +42,6 @@ noinst_HEADERS = \
 	FileSelectorWidget.h \
 	FileSystem.h \
 	FontCache.h \
-	FontConfig.h \
 	Form.h \
 	FormController.h \
 	Frame.h \
@@ -71,6 +70,7 @@ noinst_HEADERS = \
 	LuaEngine.h \
 	LuaEquipType.h \
 	LuaEvent.h \
+	LuaFaction.h \
 	LuaFileSystem.h \
 	LuaFormat.h \
 	LuaGame.h \
@@ -111,6 +111,7 @@ noinst_HEADERS = \
 	Pi.h \
 	Planet.h \
 	Player.h \
+	PngWriter.h \
 	Polit.h \
 	Projectile.h \
 	Quaternion.h \
@@ -188,7 +189,6 @@ pioneer_SOURCES	= \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
 	FontCache.cpp \
-	FontConfig.cpp \
 	FormController.cpp \
 	Frame.cpp \
 	GalacticView.cpp \
@@ -215,6 +215,7 @@ pioneer_SOURCES	= \
 	LuaEngine.cpp \
 	LuaEquipType.cpp \
 	LuaEvent.cpp \
+	LuaFaction.cpp \
 	LuaFileSystem.cpp \
 	LuaFormat.cpp \
 	LuaGame.cpp \
@@ -250,6 +251,7 @@ pioneer_SOURCES	= \
 	Pi.cpp \
 	Planet.cpp \
 	Player.cpp \
+	PngWriter.cpp \
 	Polit.cpp \
 	Projectile.cpp \
 	SDLWrappers.cpp \
@@ -325,7 +327,6 @@ modelviewer_SOURCES = \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
 	FontCache.cpp \
-	FontConfig.cpp \
 	IniConfig.cpp \
 	Lang.cpp \
 	LuaMatrix.cpp \
@@ -337,6 +338,7 @@ modelviewer_SOURCES = \
 	LuaUtils.cpp \
 	LuaConstants.cpp \
 	ModManager.cpp \
+	PngWriter.cpp \
 	EquipType.cpp \
 	ShipType.cpp \
 	SDLWrappers.cpp \
@@ -387,7 +389,6 @@ uitest_SOURCES = \
 	FileSystem.cpp \
 	SDLWrappers.cpp \
 	FontCache.cpp \
-	FontConfig.cpp \
 	IniConfig.cpp \
 	StringF.cpp \
 	Lang.cpp \
