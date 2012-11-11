@@ -9,7 +9,7 @@ Polski mod dla gry Pioneer.
 		- Zmienione reklamy na stacjach (częściowo).
 		- Przetłumaczone napisy na teksturach statków.
 
-	UWAGA: Wersja ta działa poprawnie z wersją Alpha 28dev.
+	UWAGA: Wersja ta działa poprawnie z wersją Alpha 29dev.
 -------------------------------------------------------------------------
 
 Uruchomienie.
