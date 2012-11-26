@@ -1,13 +1,15 @@
 local f = Faction:new('Konfederacja Niepodległych Systemów')
 	:description_short('Socjaldemokratyczne zgrupowanie niepodległych Systemów Gwiezdnych')
 	:description('Socjaldemokratyczne zgrupowanie niepodległych Systemów Gwiezdnych, no nie wiem, uznano ich ponieważ wydają się mocno zaangażowani politycznie.')
-	:govtype('CISSOCDEM')
 	:homeworld(1,-1,-1,0,3)
 	:foundingDate(3125.0)
 	:expansionRate(1.0)
 	:military_name('Flota Konfederacji')
 	:police_name('Policja Konfederacji')
 	:colour(0.4,1.0,0.4)
+
+f:govtype_weight('CISSOCDEM', 80)
+f:govtype_weight('CISLIBDEM', 20)
 
 f:illegal_goods_probability('ANIMAL_MEAT',75)	-- fed/cis
 f:illegal_goods_probability('LIVE_ANIMALS',75)	-- fed/cis

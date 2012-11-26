@@ -2,6 +2,7 @@
 -- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 local s = CustomSystem:new('Barnard\'s star',{ 'STAR_M' })
+    :faction('Federacja')
     :govtype('EARTHCOLONIAL')
     :short_desc('Kolonia karna Federacji Ziemskiej')
     :long_desc([[Barnard's Star to czerwony karzeł o bardzo małej masie.  Wiek gwiazdy oceniany jest na 7 do 12 miliardów lat, co najprawdopodobniej czyni ją jedną z najstarszych w galaktyce.  Pomimo to, wciąż jest dość aktywna.  Piloci wchodzący do układu ostrzegani są przed znaczną aktywnością gwiazdy, włączając w to flary i koronalne wyrzuty masy.
