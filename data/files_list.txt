@@ -52,4 +52,5 @@ systems\custom\01_werribee.lua
 systems\custom\02_black_hole.lua
 systems\custom\03_elite.lua
 systems\custom\04_empire.lua
+systems\custom\05_rondel.lua
 
