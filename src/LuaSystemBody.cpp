@@ -1,10 +1,10 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaObject.h"
 #include "LuaSystemBody.h"
 #include "LuaUtils.h"
-#include "LuaConstants.h"
+#include "EnumStrings.h"
 #include "galaxy/StarSystem.h"
 
 /*
@@ -75,7 +75,7 @@ static int l_sbody_attr_name(lua_State *l)
 static int l_sbody_attr_type(lua_State *l)
 {
 	SystemBody *sbody = LuaSystemBody::CheckFromLua(1);
-	lua_pushstring(l, LuaConstants::GetConstantString(l, "BodyType", sbody->type));
+	lua_pushstring(l, EnumStrings::GetString("BodyType", sbody->type));
 	return 1;
 }
 
@@ -95,7 +95,7 @@ static int l_sbody_attr_type(lua_State *l)
 static int l_sbody_attr_super_type(lua_State *l)
 {
 	SystemBody *sbody = LuaSystemBody::CheckFromLua(1);
-	lua_pushstring(l, LuaConstants::GetConstantString(l, "BodySuperType", sbody->GetSuperType()));
+	lua_pushstring(l, EnumStrings::GetString("BodySuperType", sbody->GetSuperType()));
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #ifndef _SHIPFLAVOUR_H
@@ -26,6 +26,7 @@ public:
 	void Save(Serializer::Writer &wr);
 	void Load(Serializer::Reader &rd);
 	void ApplyTo(LmrObjParams *p) const;
+	void ApplyTo(ModelBase *m) const;
 	static void MakeTrulyRandom(ShipFlavour &v, bool atmosphereCapableOnly = false);
 private:
 	void SaveLmrMaterial(Serializer::Writer &wr, LmrMaterial *m);

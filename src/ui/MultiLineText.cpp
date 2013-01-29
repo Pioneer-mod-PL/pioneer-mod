@@ -1,4 +1,4 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "MultiLineText.h"
@@ -31,7 +31,7 @@ void MultiLineText::Layout()
 
 void MultiLineText::Draw()
 {
-	m_layout->Draw(GetSize());
+	m_layout->Draw(GetSize(), GetDrawOffset(), GetContext()->GetScissor());
 }
 
 Widget *MultiLineText::SetFont(Font font) {

@@ -1,4 +1,4 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaObject.h"
@@ -9,6 +9,7 @@
 #include "LuaStarSystem.h"
 #include "LuaSystemPath.h"
 #include "LuaConstants.h"
+#include "EnumStrings.h"
 #include "LuaUtils.h"
 #include "galaxy/StarSystem.h"
 #include "EquipType.h"
@@ -147,7 +148,7 @@ static int l_starsystem_get_commodity_base_price_alterations(lua_State *l)
 	lua_newtable(l);
 
 	for (int e = Equip::FIRST_COMMODITY; e <= Equip::LAST_COMMODITY; e++) {
-		lua_pushstring(l, LuaConstants::GetConstantString(l, "EquipType", e));
+		lua_pushstring(l, EnumStrings::GetString("EquipType", e));
 		lua_pushnumber(l, s->GetCommodityBasePriceModPercent(e));
 		lua_rawset(l, -3);
 	}
@@ -183,7 +184,7 @@ static int l_starsystem_get_commodity_base_price_alterations(lua_State *l)
 static int l_starsystem_is_commodity_legal(lua_State *l)
 {
 	StarSystem *s = LuaStarSystem::CheckFromLua(1);
-	Equip::Type e = static_cast<Equip::Type>(LuaConstants::GetConstant(l, "EquipType", luaL_checkstring(l, 2)));
+	Equip::Type e = static_cast<Equip::Type>(LuaConstants::GetConstantFromArg(l, "EquipType", 2));
 	lua_pushboolean(l, Polit::IsCommodityLegal(s, e));
 	return 1;
 }
@@ -433,6 +434,27 @@ static int l_starsystem_attr_faction(lua_State *l)
 	}
 }
 
+/*
+ * Attribute: explored
+ *
+ *   If this system has been explored then returns true
+ *
+ * Availability:
+ *
+ *   alpha 30
+ *
+ * Status:
+ *
+ *   experimental
+ */
+
+static int l_starsystem_attr_explored(lua_State *l)
+{
+	StarSystem *s = LuaStarSystem::CheckFromLua(1);
+	lua_pushboolean(l, !s->GetUnexplored());
+	return 1;
+}
+
 template <> const char *LuaObject<StarSystem>::s_type = "StarSystem";
 
 template <> void LuaObject<StarSystem>::RegisterClass()
@@ -458,6 +480,7 @@ template <> void LuaObject<StarSystem>::RegisterClass()
 		{ "lawlessness", l_starsystem_attr_lawlessness },
 		{ "population",  l_starsystem_attr_population  },
 		{ "faction",     l_starsystem_attr_faction     },
+		{ "explored",    l_starsystem_attr_explored    },
 
 		{ 0, 0 }
 	};

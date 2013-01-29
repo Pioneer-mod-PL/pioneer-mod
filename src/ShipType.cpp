@@ -1,4 +1,4 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ShipType.h"
@@ -90,6 +90,12 @@ static void _get_vec_attrib(lua_State *L, const char *key, vector3d &output,
 	LUA_DEBUG_END(L, 0);
 }
 
+// returns velocity of engine exhausts in m/s
+static double GetEffectiveExhaustVelocity(double fuelTankMass, double thrusterFuelUse, double forwardThrust) {
+	double denominator = fuelTankMass * thrusterFuelUse * 10;
+	return fabs(denominator > 0 ? forwardThrust/denominator : 1e9);
+}
+
 static std::string s_currentShipFile;
 
 int _define_ship(lua_State *L, ShipType::Tag tag, std::vector<ShipType::Id> *list)
@@ -143,9 +149,27 @@ int _define_ship(lua_State *L, ShipType::Tag tag, std::vector<ShipType::Id> *lis
 	_get_int_attrib(L, "capacity", s.capacity, 0);
 	_get_int_attrib(L, "hull_mass", s.hullMass, 100);
 	_get_int_attrib(L, "fuel_tank_mass", s.fuelTankMass, 5);
-	_get_float_attrib(L, "thruster_fuel_use", s.thrusterFuelUse, 1.f);
+
+	// fuel_use_rate can be given in two ways
+	float thruster_fuel_use = 0;
+	_get_float_attrib(L, "effective_exhaust_velocity", s.effectiveExhaustVelocity, -1.0f);
+	_get_float_attrib(L, "thruster_fuel_use", thruster_fuel_use, -1.0f);
+	if(s.effectiveExhaustVelocity < 0 && thruster_fuel_use < 0) {
+		// default value of v_c is used
+		s.effectiveExhaustVelocity = 55000000;
+	} else if(s.effectiveExhaustVelocity < 0 && thruster_fuel_use >= 0) {
+		// v_c undefined and thruster fuel use defined -- use it!
+		s.effectiveExhaustVelocity = GetEffectiveExhaustVelocity(s.fuelTankMass, thruster_fuel_use, s.linThrust[ShipType::THRUSTER_FORWARD]);
+	} else {
+		if(thruster_fuel_use >= 0)
+			printf("Warning: Both thruster_fuel_use and effective_exhaust_velocity defined for %s, using effective_exhaust_velocity.\n", s.lmrModelName.c_str());
+	}
+
 	_get_int_attrib(L, "price", s.baseprice, 0);
 	s.baseprice *= 100; // in hundredths of credits
+
+	_get_int_attrib(L, "min_crew", s.minCrew, 1);
+	_get_int_attrib(L, "max_crew", s.maxCrew, 1);
 
 	s.equipSlotCapacity[Equip::SLOT_ENGINE] = Clamp(s.equipSlotCapacity[Equip::SLOT_ENGINE], 0, 1);
 
@@ -197,13 +221,18 @@ int _define_ship(lua_State *L, ShipType::Tag tag, std::vector<ShipType::Id> *lis
 	if (s.lmrModelName.empty())
 		return luaL_error(L, "Missing model name in ship");
 
+	if (s.minCrew < 1 || s.maxCrew < 1 || s.minCrew > s.maxCrew)
+		return luaL_error(L, "Invalid values for min_crew and max_crew");
+
 	//this shouldn't necessarily be a fatal problem, could just warn+mark ship unusable
 	//or replace with proxy geometry
+#if 0
 	try {
 		LmrLookupModelByName(s.lmrModelName.c_str());
 	} catch (LmrModelNotFoundException &) {
 		return luaL_error(L, "Model %s is not defined", s.lmrModelName.c_str());
 	}
+#endif
 
 	const std::string& id = s_currentShipFile;
 	typedef std::map<ShipType::Id, ShipType>::iterator iter;

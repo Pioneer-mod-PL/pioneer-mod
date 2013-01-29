@@ -1,10 +1,10 @@
 
 Aktualna lista plików tworzących moda:
 
-factions\00_default.lua
-factions\01_federation.lua
-factions\02_CIS.lua
-factions\03_red.lua
+factions\01_default.lua
+factions\02_federation.lua
+factions\03_CIS.lua
+factions\04_red.lua
 icons\badge.png
 lmrmodels\ships\boa\boa.png
 lmrmodels\ships\default_ship_textures\station_splash.png

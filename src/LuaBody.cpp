@@ -1,10 +1,10 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaBody.h"
 #include "LuaSystemPath.h"
 #include "LuaUtils.h"
-#include "LuaConstants.h"
+#include "EnumStrings.h"
 #include "Body.h"
 #include "galaxy/StarSystem.h"
 #include "Frame.h"
@@ -124,7 +124,7 @@ static int l_body_attr_type(lua_State *l)
 		return 1;
 	}
 
-	lua_pushstring(l, LuaConstants::GetConstantString(l, "BodyType", sbody->type));
+	lua_pushstring(l, EnumStrings::GetString("BodyType", sbody->type));
 	return 1;
 }
 
@@ -152,7 +152,7 @@ static int l_body_attr_super_type(lua_State *l)
 		return 1;
 	}
 
-	lua_pushstring(l, LuaConstants::GetConstantString(l, "BodySuperType", sbody->GetSuperType()));
+	lua_pushstring(l, EnumStrings::GetString("BodySuperType", sbody->GetSuperType()));
 	return 1;
 }
 
@@ -185,7 +185,7 @@ static int l_body_attr_frame_body(lua_State *l)
 	}
 
 	Frame *f = b->GetFrame();
-	LuaBody::PushToLua(f->GetBodyFor());
+	LuaBody::PushToLua(f->GetBody());
 	return 1;
 }
 
@@ -214,7 +214,7 @@ static int l_body_attr_frame_rotating(lua_State *l)
 	}
 
 	Frame *f = b->GetFrame();
-	lua_pushboolean(l, f->IsRotatingFrame());
+	lua_pushboolean(l, f->IsRotFrame());
 	return 1;
 }
 

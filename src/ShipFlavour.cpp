@@ -1,4 +1,4 @@
-// Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "libs.h"
@@ -77,10 +77,14 @@ void ShipFlavour::MakeTrulyRandom(ShipFlavour &v, bool atmospheric)
 
 void ShipFlavour::ApplyTo(LmrObjParams *p) const
 {
-	p->label = regid.c_str();
 	p->pMat[0] = primaryColor;
 	p->pMat[1] = secondaryColor;
 	p->pMat[2] = s_white;
+}
+
+void ShipFlavour::ApplyTo(ModelBase *m) const
+{
+	m->SetLabel(regid);
 }
 
 void ShipFlavour::SaveLmrMaterial(Serializer::Writer &wr, LmrMaterial *m)

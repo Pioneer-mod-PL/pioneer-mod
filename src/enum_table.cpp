@@ -1,4 +1,4 @@
-/* Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details */
+/* Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details */
 /* Licensed under the terms of the GPL v3. See licenses/GPL-3.txt        */
 
 /* THIS FILE IS AUTO-GENERATED, CHANGES WILL BE OVERWRITTEN */
@@ -7,12 +7,12 @@
 #include "enum_table.h"
 #include "EquipType.h"
 #include "LuaFileSystem.h"
-#include "Player.h"
 #include "Polit.h"
 #include "Ship.h"
 #include "ShipType.h"
 #include "SpaceStation.h"
 #include "galaxy/StarSystem.h"
+#include "gameui/Face.h"
 #include "ui/Align.h"
 #include "ui/Event.h"
 #include "ui/Expand.h"
@@ -124,13 +124,6 @@ const struct EnumItem ENUM_EquipType[] = {
 const struct EnumItem ENUM_FileSystemRoot[] = {
 	{ "USER", LuaFileSystem::ROOT_USER },
 	{ "DATA", LuaFileSystem::ROOT_DATA },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_MissionStatus[] = {
-	{ "ACTIVE", Mission::ACTIVE },
-	{ "COMPLETED", Mission::COMPLETED },
-	{ "FAILED", Mission::FAILED },
 	{ 0, 0 },
 };
 
@@ -312,6 +305,14 @@ const struct EnumItem ENUM_BodySuperType[] = {
 	{ 0, 0 },
 };
 
+const struct EnumItem ENUM_GameUIFaceFlags[] = {
+	{ "RAND", GameUI::Face::RAND },
+	{ "MALE", GameUI::Face::MALE },
+	{ "FEMALE", GameUI::Face::FEMALE },
+	{ "ARMOUR", GameUI::Face::ARMOUR },
+	{ 0, 0 },
+};
+
 const struct EnumItem ENUM_UIAlignDirection[] = {
 	{ "TOP_LEFT", UI::Align::TOP_LEFT },
 	{ "TOP", UI::Align::TOP },
@@ -407,3 +408,37 @@ const struct EnumItem ENUM_UIFont[] = {
 	{ 0, 0 },
 };
 
+const struct EnumTable ENUM_TABLES[] = {
+	{ "EquipSlot", ENUM_EquipSlot },
+	{ "EquipType", ENUM_EquipType },
+	{ "FileSystemRoot", ENUM_FileSystemRoot },
+	{ "PolitCrime", ENUM_PolitCrime },
+	{ "PolitEcon", ENUM_PolitEcon },
+	{ "PolitGovType", ENUM_PolitGovType },
+	{ "ShipAnimation", ENUM_ShipAnimation },
+	{ "ShipFlightState", ENUM_ShipFlightState },
+	{ "ShipJumpStatus", ENUM_ShipJumpStatus },
+	{ "ShipAlertStatus", ENUM_ShipAlertStatus },
+	{ "ShipAIError", ENUM_ShipAIError },
+	{ "ShipFuelStatus", ENUM_ShipFuelStatus },
+	{ "ShipTypeThruster", ENUM_ShipTypeThruster },
+	{ "DualLaserOrientation", ENUM_DualLaserOrientation },
+	{ "ShipTypeTag", ENUM_ShipTypeTag },
+	{ "SpaceStationAnimation", ENUM_SpaceStationAnimation },
+	{ "EconType", ENUM_EconType },
+	{ "BodyType", ENUM_BodyType },
+	{ "BodySuperType", ENUM_BodySuperType },
+	{ "GameUIFaceFlags", ENUM_GameUIFaceFlags },
+	{ "UIAlignDirection", ENUM_UIAlignDirection },
+	{ "UIEventType", ENUM_UIEventType },
+	{ "UIKeyboardAction", ENUM_UIKeyboardAction },
+	{ "UIMouseButtonAction", ENUM_UIMouseButtonAction },
+	{ "UIMouseButtonType", ENUM_UIMouseButtonType },
+	{ "UIMouseWheelDirection", ENUM_UIMouseWheelDirection },
+	{ "UIExpandDirection", ENUM_UIExpandDirection },
+	{ "UIGradientDirection", ENUM_UIGradientDirection },
+	{ "UIMarginDirection", ENUM_UIMarginDirection },
+	{ "UISizeControl", ENUM_UISizeControl },
+	{ "UIFont", ENUM_UIFont },
+	{ 0, 0 },
+};
