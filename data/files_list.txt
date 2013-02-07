@@ -1,6 +1,7 @@
 
 Aktualna lista plików tworzących moda:
 
+factions\00_AutoGenerate.lua
 factions\01_default.lua
 factions\02_federation.lua
 factions\03_CIS.lua
@@ -10,10 +11,10 @@ lmrmodels\ships\boa\boa.png
 lmrmodels\ships\default_ship_textures\station_splash.png
 lmrmodels\ships\eye\eye6.png
 lmrmodels\ships\viper\viper_pol1.png
-lmrmodels\sub_models\adverts\coolcola.png
-lmrmodels\sub_models\adverts\inteloutside.png
-lmrmodels\sub_models\adverts\pioneer_0_l.png
-lmrmodels\sub_models\adverts\sirius_2.png
+lmrmodels\00_sub_models\adverts\coolcola.png
+lmrmodels\00_sub_models\adverts\inteloutside.png
+lmrmodels\00_sub_models\adverts\pioneer_0_l.png
+lmrmodels\00_sub_models\adverts\sirius_2.png
 ships\adder.lua
 ships\asp_explorer.lua
 ships\boa_freighter.lua
@@ -53,4 +54,3 @@ systems\custom\02_black_hole.lua
 systems\custom\03_elite.lua
 systems\custom\04_empire.lua
 systems\custom\05_rondel.lua
-

@@ -14,19 +14,19 @@
 -- CONFIGURATION
 ------------------------------------------------------------------------------
 
-local prefixes = { 'Rim', 'Obsidian', 'United', 'Shattered','Stellar','Free'
-				 , 'Blood', 'True', 'Far', 'Dagger', 'Liberation', 'Provisional'
-				 , 'Continuity', 'Independent', 'Inner', 'Outer' }
+local prefixes = { 'Przybrzeżna', 'Wulkaniczna', 'Zjednoczona', 'Strzaskana','Gwiezdna','Wolna'
+				 , 'Krwawa', 'Prawdziwa', 'Odległa', 'Naznaczona', 'Liberalna', 'Tymczasowa'
+				 , 'Nieskończona', 'Niepodległa', 'Wewnętrzna', 'Zewnętrzna' }
 
-local suffixes = { 'Alliance', 'Union', 'Expanse', 'Horde', 'Faction'
-                 , 'Network', 'League', 'Empire', 'Kingdoms', 'Systems'
-				 , 'Council', 'Worlds', 'Commonwealth', 'Territories'
-				 , 'Republic' }
+local suffixes = { 'Koalicja', 'Unia', 'Ekspansja', 'Horda', 'Frakcja'
+                 , 'Sieć', 'Liga', 'Monarchia', 'Dynastia', 'Formacja'
+				 , 'Rada', 'Sfera', 'Wspólnota Narodów', 'Strefa'
+				 , 'Republika' }
 
-local police_suffixes   = {'Police', 'Constabulary', 'Interior Ministry', 'Security', 'Inquisition', 'Prefecture'
-                          ,'Justiciars'}
-local military_suffixes = {'Navy', 'Defense Force', 'Militia', 'Legion', 'War Fleet', 'Guards', 'Space Patrol', 'Regiments'
-                          ,'Space Arm', 'Defense Wing', 'Battle Flight'}
+local police_suffixes   = {'Policja', 'Komenda', 'Służba Wewnętrzna', 'Ochrona', 'Inkwizycja', 'Prefektura'
+                          ,'Sprawiedliwość'}
+local military_suffixes = {'Flota', 'Siła Obrony', 'Milicja', 'Legia', 'Flota Wojenna', 'Straż', 'Grupa Patrolowa', 'Jednostka'
+                          ,'Prawica Przestrzeni', 'Linia Obrony', 'Eskadra Bojowa'}
 
 local possible_govtypes = { 'DISORDER', 'MILDICT1', 'PLUTOCRATIC', 'CORPORATE',
                             'LIBDEM', 'SOCDEM', 'COMMUNIST', 'MILDICT2', 'DISORDER' }
