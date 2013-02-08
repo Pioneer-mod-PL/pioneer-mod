@@ -1,21 +1,29 @@
-
 Polski mod dla gry Pioneer.
 
-	Aktualnie zawiera :
+  Stworzony głównie po to, aby uzupełnić Polskie tłumaczenie gry Pioneer
+  o nieprzetłumaczalne jak do tej pory zwroty.
 
-		- Przetłumaczone nazwy statków.
-		- Przetłumaczone opisy systemów.
-		- Przetłumaczone nazwy planet w 'Sol'(Układ Słoneczny).
-		- Zmienione reklamy na stacjach (częściowo).
-		- Przetłumaczone napisy na teksturach statków.
+  Aktualnie zawiera :
+    - Przetłumaczone nazwy statków.
+    - Przetłumaczone opisy systemów.
+    - Przetłumaczone nazwy planet w 'Sol'(Układ Słoneczny).
+    - Przetłumaczona automatycznie generowana lista Frakcji.
+    - Zmienione reklamy na stacjach (częściowo).
+    - Przetłumaczone napisy na teksturach statków.
+  i wiele innych...
 
-	UWAGA: Wersja ta działa poprawnie z wersją Alpha 29dev.
+  Wersja moda jest w miarę możliwości aktualizowana i korygowana
+  w Branch/mod z najnowszym pionerspacesim/pioneer/master.
+
 -------------------------------------------------------------------------
 
-Uruchomienie.
+Uruchomienie:
 
-	Kliknij Downloads u góry z prawej i pobierz aktualną dla siebie wrsję moda,
-	pobrany plik ZIP umieść w katalogu 'użytkownik/My Documents/Pioneer/mods'.
+  Wybierz wersję Moda pasującą do Twojej wersji gry:
+    - alpha31modPL.zip
+    http://www.speedshare.org/download.php?id=EC5709241
+
+  Pobrany plik ZIP umieść w katalogu 'użytkownik/My Documents/Pioneer/mods'.
 
 Autorzy:
 	Piotr Gredka
