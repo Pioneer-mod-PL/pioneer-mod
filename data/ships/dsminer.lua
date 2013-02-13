@@ -2,7 +2,7 @@
 -- Licensed under the terms of CC-BY-SA 3.0. See licenses/CC-BY-SA-3.0.txt
 
 define_ship {
-	name = 'Deep Space Miner',
+	name = 'Frachtowiec Górniczy',
 	model = 'dsminer',
 	forward_thrust = 60e6,
 	reverse_thrust = 20e6,
