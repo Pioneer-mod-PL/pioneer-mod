@@ -3,7 +3,7 @@
 
 local system = CustomSystem:new('Achernar', { 'STAR_B',  })
 	:govtype('NONE')
-	:short_desc('Small-scale prospecting. No registered settlements.')
+	:short_desc('Prace badawcze na małą skalę. Brak zarejestrowanych mieszkańców.')
 	:long_desc([[]])
 
 local achernar = CustomSystemBody:new("Achernar", 'STAR_B')
