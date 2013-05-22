@@ -21,7 +21,7 @@ Uruchomienie:
 
   Wybierz wersję Moda pasującą do Twojej wersji gry:
     - alpha31modPL.zip
-    http://www.speedshare.org/download.php?id=EC5709241
+    http://www.speedyshare.com/fw5fk/alpha31modPL.zip
 
   Pobrany plik ZIP umieść w katalogu 'użytkownik/My Documents/Pioneer/mods'.
 
