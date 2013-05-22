@@ -38,10 +38,10 @@ public:
 	virtual ~Terrain();
 
 	void SetFracDef(unsigned int index, double featureHeightMeters, double featureWidthMeters, double smallestOctaveMeters = 20.0);
-	inline const fracdef_t &GetFracDef(unsigned int index) { return m_fracdef[index]; }
+	inline const fracdef_t &GetFracDef(unsigned int index) const { return m_fracdef[index]; }
 
-	virtual double GetHeight(const vector3d &p) = 0;
-	virtual vector3d GetColor(const vector3d &p, double height, const vector3d &norm) = 0;
+	virtual double GetHeight(const vector3d &p) const = 0;
+	virtual vector3d GetColor(const vector3d &p, double height, const vector3d &norm) const = 0;
 
 	virtual const char *GetHeightFractalName() const = 0;
 	virtual const char *GetColorFractalName() const = 0;
@@ -69,7 +69,7 @@ protected:
 	const SystemBody *m_body;
 
 	Uint32 m_seed;
-	MTRand m_rand;
+	Random m_rand;
 
 	double m_sealevel; // 0 - no water, 1 - 100% coverage
 	double m_icyness; // 0 - 1 (0% to 100% cover)
@@ -121,7 +121,7 @@ protected:
 template <typename HeightFractal>
 class TerrainHeightFractal : virtual public Terrain {
 public:
-	virtual double GetHeight(const vector3d &p);
+	virtual double GetHeight(const vector3d &p) const;
 	virtual const char *GetHeightFractalName() const;
 protected:
 	TerrainHeightFractal(const SystemBody *body);
@@ -132,7 +132,7 @@ private:
 template <typename ColorFractal>
 class TerrainColorFractal : virtual public Terrain {
 public:
-	virtual vector3d GetColor(const vector3d &p, double height, const vector3d &norm);
+	virtual vector3d GetColor(const vector3d &p, double height, const vector3d &norm) const;
 	virtual const char *GetColorFractalName() const;
 protected:
 	TerrainColorFractal(const SystemBody *body);
@@ -166,6 +166,8 @@ class TerrainHeightBarrenRock3;
  http://i.imgur.com/BtB0g.png
  http://i.imgur.com/qeEuS.png
  */
+
+class TerrainHeightEllipsoid;
 
 // Newish terrains, 6 months or so :
 class TerrainHeightHillsCraters2;

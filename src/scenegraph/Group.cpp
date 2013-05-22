@@ -3,6 +3,7 @@
 
 #include "Group.h"
 #include "NodeVisitor.h"
+#include "NodeCopyCache.h"
 
 namespace SceneGraph {
 
@@ -21,21 +22,21 @@ Group::~Group()
 	}
 }
 
-Group::Group(const Group &group)
-: Node(group)
+Group::Group(const Group &group, NodeCopyCache *cache)
+: Node(group, cache)
 {
 	for(std::vector<Node*>::const_iterator itr = group.m_children.begin();
 		itr != group.m_children.end();
 		++itr)
 	{
-		Node *node = (*itr)->Clone();
+		Node *node = (*itr)->Clone(cache);
 		AddChild(node);
 	}
 }
 
-Node* Group::Clone()
+Node* Group::Clone(NodeCopyCache *cache)
 {
-	return new Group(*this);
+	return cache->Copy<Group>(this);
 }
 
 void Group::AddChild(Node *child)
@@ -67,6 +68,11 @@ bool Group::RemoveChildAt(unsigned int idx)
 	node->DecRefCount();
 	m_children.erase(m_children.begin() + idx);
 	return true;
+}
+
+Node* Group::GetChildAt(unsigned int idx)
+{
+	return m_children.at(idx);
 }
 
 Node* Group::FindNode(const std::string &name)

@@ -10,9 +10,10 @@
 #include "Serializer.h"
 #include <vector>
 #include <string>
-#include "DeleteEmitter.h"
 #include "RefCounted.h"
 #include "galaxy/SystemPath.h"
+#include "Orbit.h"
+#include "gameconsts.h"
 
 class CustomSystemBody;
 class CustomSystem;
@@ -21,7 +22,7 @@ class SystemBody;
 // doubles - all masses in Kg, all lengths in meters
 // fixed - any mad scheme
 
-enum EconType { // <enum name=EconType prefix=ECON_>
+enum EconType { // <enum name=EconType prefix=ECON_ public>
 	ECON_MINING = 1<<0,
 	ECON_AGRICULTURE = 1<<1,
 	ECON_INDUSTRY = 1<<2,
@@ -29,20 +30,6 @@ enum EconType { // <enum name=EconType prefix=ECON_>
 
 class StarSystem;
 class Faction;
-
-struct Orbit {
-	Orbit(): orbitalPhaseAtStart(0.0) {};
-	vector3d OrbitalPosAtTime(double t) const;
-	// 0.0 <= t <= 1.0. Not for finding orbital pos
-	vector3d EvenSpacedPosAtTime(double t) const;
-	/* duplicated from SystemBody... should remove probably */
-	double eccentricity;
-	double semiMajorAxis;
-	double orbitalPhaseAtStart; // 0 to 2 pi radians
-	/* dup " " --------------------------------------- */
-	double period; // seconds
-	matrix3x3d rotMatrix;
-};
 
 struct RingStyle {
 	// note: radius values are given as proportions of the planet radius
@@ -52,16 +39,15 @@ struct RingStyle {
 	Color4ub baseColor;
 };
 
-class SystemBody {
+class SystemBody : public RefCounted {
 public:
 	SystemBody();
-	~SystemBody();
-	void PickPlanetType(MTRand &rand);
+	void PickPlanetType(Random &rand);
 	const SystemBody *FindStarAndTrueOrbitalRange(fixed &orbMin, fixed &orbMax);
-	SystemBody *parent;
-	std::vector<SystemBody*> children;
+	SystemBody *parent;                // these are only valid if the StarSystem
+	std::vector<SystemBody*> children; // that create them still exists
 
-	enum BodyType { // <enum scope='SystemBody' prefix=TYPE_>
+	enum BodyType { // <enum scope='SystemBody' prefix=TYPE_ public>
 		TYPE_GRAVPOINT = 0,
 		TYPE_BROWN_DWARF = 1, //  L+T Class Brown Dwarfs
 		TYPE_WHITE_DWARF = 2,
@@ -111,7 +97,7 @@ public:
 		// XXX need larger atmosphereless thing
 	};
 
-	enum BodySuperType { // <enum scope='SystemBody' prefix=SUPERTYPE_>
+	enum BodySuperType { // <enum scope='SystemBody' prefix=SUPERTYPE_ public>
 		SUPERTYPE_NONE = 0,
 		SUPERTYPE_STAR = 1,
 		SUPERTYPE_ROCKY_PLANET = 2,
@@ -122,9 +108,9 @@ public:
 	std::string GetAstroDescription() const;
 	const char *GetIcon() const;
 	BodySuperType GetSuperType() const;
-	double GetRadius() const {
+	double GetRadius() const { // polar radius
 		if (GetSuperType() <= SUPERTYPE_STAR)
-			return radius.ToDouble() * SOL_RADIUS;
+			return (radius.ToDouble() / aspectRatio.ToDouble()) * SOL_RADIUS;
 		else
 			return radius.ToDouble() * EARTH_RADIUS;
 	}
@@ -185,7 +171,8 @@ public:
 	Orbit orbit;
 	Uint32 seed; // Planet.cpp can use to generate terrain
 	std::string name;
-	fixed radius;
+	fixed radius; // in earth radii for planets, sol radii for stars. equatorial radius in case of bodies which are flattened at the poles
+	fixed aspectRatio; // ratio between equatorial and polar radius for bodies with eqatorial bulges
 	fixed mass; // earth masses if planet, solar masses if star
 	fixed orbMin, orbMax; // periapsism, apoapsis in AUs
 	fixed rotationPeriod; // in days
@@ -196,6 +183,7 @@ public:
 	fixed orbitalOffset;
 	fixed orbitalPhaseAtStart; // 0 to 2 pi
 	fixed axialTilt; // in radians
+	fixed inclination; // in radians, for surface bodies = latitude
 	int averageTemp;
 	BodyType type;
 	bool isCustomBody;
@@ -222,12 +210,13 @@ private:
 	double m_atmosDensity;
 };
 
-class StarSystem : public DeleteEmitter, public RefCounted {
+class StarSystem : public RefCounted {
 public:
 	friend class SystemBody;
 
 	static RefCountedPtr<StarSystem> GetCached(const SystemPath &path);
 	static void ShrinkCache();
+	void ExportToLua(const char *filename);
 
 	const std::string &GetName() const { return m_name; }
 	SystemPath GetPathOf(const SystemBody *sbody) const;
@@ -247,10 +236,10 @@ public:
 	static float starScale[];
 	static fixed starMetallicities[];
 
-	SystemBody *rootBody;
+	RefCountedPtr<SystemBody> rootBody;
 	std::vector<SystemBody*> m_spaceStations;
 	// index into this will be the SystemBody ID used by SystemPath
-	std::vector<SystemBody*> m_bodies;
+	std::vector< RefCountedPtr<SystemBody> > m_bodies;
 
 	int GetCommodityBasePriceModPercent(int t) {
 		return m_tradeLevel[t];
@@ -275,18 +264,20 @@ private:
 		SystemBody *body = new SystemBody;
 		body->path = m_path;
 		body->path.bodyIndex = m_bodies.size();
-		m_bodies.push_back(body);
+		m_bodies.push_back(RefCountedPtr<SystemBody>(body));
 		return body;
 	}
-	void MakeShortDescription(MTRand &rand);
-	void MakePlanetsAround(SystemBody *primary, MTRand &rand);
-	void MakeRandomStar(SystemBody *sbody, MTRand &rand);
-	void MakeStarOfType(SystemBody *sbody, SystemBody::BodyType type, MTRand &rand);
-	void MakeStarOfTypeLighterThan(SystemBody *sbody, SystemBody::BodyType type, fixed maxMass, MTRand &rand);
-	void MakeBinaryPair(SystemBody *a, SystemBody *b, fixed minDist, MTRand &rand);
-	void CustomGetKidsOf(SystemBody *parent, const std::vector<CustomSystemBody*> &children, int *outHumanInfestedness, MTRand &rand);
-	void GenerateFromCustom(const CustomSystem *, MTRand &rand);
+	void MakeShortDescription(Random &rand);
+	void MakePlanetsAround(SystemBody *primary, Random &rand);
+	void MakeRandomStar(SystemBody *sbody, Random &rand);
+	void MakeStarOfType(SystemBody *sbody, SystemBody::BodyType type, Random &rand);
+	void MakeStarOfTypeLighterThan(SystemBody *sbody, SystemBody::BodyType type, fixed maxMass, Random &rand);
+	void MakeBinaryPair(SystemBody *a, SystemBody *b, fixed minDist, Random &rand);
+	void CustomGetKidsOf(SystemBody *parent, const std::vector<CustomSystemBody*> &children, int *outHumanInfestedness, Random &rand);
+	void GenerateFromCustom(const CustomSystem *, Random &rand);
 	void Populate(bool addSpaceStations);
+	std::string ExportBodyToLua(FILE *f, SystemBody *body);
+	std::string GetStarTypes(SystemBody *body);
 
 	SystemPath m_path;
 	int m_numStars;

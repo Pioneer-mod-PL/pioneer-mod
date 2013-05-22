@@ -5,15 +5,15 @@
 #define _SHIP_H
 
 #include "libs.h"
-#include "DynamicBody.h"
-#include "ShipType.h"
-#include "EquipSet.h"
-#include "ShipFlavour.h"
-#include "galaxy/SystemPath.h"
-#include "BezierCurve.h"
-#include "Serializer.h"
 #include "Camera.h"
+#include "DynamicBody.h"
+#include "EquipSet.h"
+#include "galaxy/SystemPath.h"
+#include "NavLights.h"
+#include "Serializer.h"
+#include "ShipType.h"
 #include "scenegraph/SceneGraph.h"
+#include "scenegraph/ModelSkin.h"
 #include <list>
 
 class SpaceStation;
@@ -50,14 +50,11 @@ class Ship: public DynamicBody {
 	friend class ShipController; //only controllers need access to AITimeStep
 	friend class PlayerShipController;
 public:
-	enum Animation { // <enum scope='Ship' name=ShipAnimation prefix=ANIM_>
-		ANIM_WHEEL_STATE
-	};
-
 	OBJDEF(Ship, DynamicBody, SHIP);
 	Ship(ShipType::Id shipId);
 	Ship() {} //default constructor used before Load
 	virtual ~Ship();
+
 	void SetController(ShipController *c); //deletes existing
 	ShipController *GetController() const { return m_controller; }
 	virtual bool IsPlayerShip() const { return false; } //XXX to be replaced with an owner check
@@ -80,12 +77,11 @@ public:
 	void ClearThrusterState();
 
 	vector3d GetMaxThrust(const vector3d &dir) const;
-	double GetAccelFwd() const { return -GetShipType().linThrust[ShipType::THRUSTER_FORWARD] / GetMass(); }
-	double GetAccelRev() const { return GetShipType().linThrust[ShipType::THRUSTER_REVERSE] / GetMass(); }
-	double GetAccelUp() const { return GetShipType().linThrust[ShipType::THRUSTER_UP] / GetMass(); }
+	double GetAccelFwd() const { return -m_type->linThrust[ShipType::THRUSTER_FORWARD] / GetMass(); }
+	double GetAccelRev() const { return m_type->linThrust[ShipType::THRUSTER_REVERSE] / GetMass(); }
+	double GetAccelUp() const { return m_type->linThrust[ShipType::THRUSTER_UP] / GetMass(); }
 	double GetAccelMin() const;
 
-	const ShipType &GetShipType() const { return *m_type; }
 	void UpdateEquipStats();
 	void UpdateFuelStats();
 	void UpdateStats();
@@ -108,7 +104,7 @@ public:
 	virtual bool OnCollision(Object *o, Uint32 flags, double relVel);
 	virtual bool OnDamage(Object *attacker, float kgDamage);
 
-	enum FlightState { // <enum scope='Ship' name=ShipFlightState>
+	enum FlightState { // <enum scope='Ship' name=ShipFlightState public>
 		FLYING,     // open flight (includes autopilot)
 		DOCKING,    // in docking animation
 		DOCKED,     // docked with station
@@ -119,6 +115,7 @@ public:
 	FlightState GetFlightState() const { return m_flightState; }
 	void SetFlightState(FlightState s);
 	float GetWheelState() const { return m_wheelState; }
+	int GetWheelTransition() const { return m_wheelTransition; }
 	bool SpawnCargo(CargoBody * c_body) const;
 
 	virtual bool IsInSpace() const { return (m_flightState != HYPERSPACE); }
@@ -127,7 +124,7 @@ public:
 	const SystemPath &GetHyperspaceDest() const { return m_hyperspace.dest; }
 	double GetHyperspaceDuration() const { return m_hyperspace.duration; }
 
-	enum HyperjumpStatus { // <enum scope='Ship' name=ShipJumpStatus prefix=HYPERJUMP_>
+	enum HyperjumpStatus { // <enum scope='Ship' name=ShipJumpStatus prefix=HYPERJUMP_ public>
 		HYPERJUMP_OK,
 		HYPERJUMP_CURRENT_SYSTEM,
 		HYPERJUMP_NO_DRIVE,
@@ -161,7 +158,7 @@ public:
 	void UseECM();
 	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
 
-	enum AlertState { // <enum scope='Ship' name=ShipAlertStatus prefix=ALERT_>
+	enum AlertState { // <enum scope='Ship' name=ShipAlertStatus prefix=ALERT_ public>
 		ALERT_NONE,
 		ALERT_SHIP_NEARBY,
 		ALERT_SHIP_FIRING,
@@ -186,7 +183,7 @@ public:
 	bool AIIsActive() { return m_curAICmd ? true : false; }
 	void AIGetStatusText(char *str);
 
-	enum AIError { // <enum scope='Ship' name=ShipAIError prefix=AIERROR_>
+	enum AIError { // <enum scope='Ship' name=ShipAIError prefix=AIERROR_ public>
 		AIERROR_NONE=0,
 		AIERROR_GRAV_TOO_HIGH,
 		AIERROR_REFUSED_PERM,
@@ -208,19 +205,21 @@ public:
 
 	virtual void PostLoadFixup(Space *space);
 
-	const ShipFlavour *GetFlavour() const { return &m_shipFlavour; }
-	// used to change ship label or colour. asserts if you try to change type
-	void UpdateFlavour(const ShipFlavour *f);
-	// used when buying a new ship. changes the flavour and resets cargo,
-	// equipment, etc
-	void ResetFlavour(const ShipFlavour *f);
+	const ShipType *GetShipType() const { return m_type; }
+	void SetShipType(const ShipType::Id &shipId);
+
+	const SceneGraph::ModelSkin &GetSkin() const { return m_skin; }
+	void SetSkin(const SceneGraph::ModelSkin &skin);
+
+	void SetLabel(const std::string &label);
+	static std::string MakeRandomLabel(); // XXX doesn't really belong here
 
 	float GetPercentShields() const;
 	float GetPercentHull() const;
 	void SetPercentHull(float);
 	float GetGunTemperature(int idx) const { return m_gunTemperature[idx]; }
 
-	enum FuelState { // <enum scope='Ship' name=ShipFuelStatus prefix=FUEL_>
+	enum FuelState { // <enum scope='Ship' name=ShipFuelStatus prefix=FUEL_ public>
 		FUEL_OK,
 		FUEL_WARNING,
 		FUEL_EMPTY,
@@ -229,7 +228,7 @@ public:
 
 	// fuel left, 0.0-1.0
 	double GetFuel() const { return m_thrusterFuel;	}
-	void SetFuel(const double f) { m_thrusterFuel = Clamp(f, 0.0, 1.0); }
+	void SetFuel(const double f);
 	double GetFuelReserve() const { return m_reserveFuel; }
 	void SetFuelReserve(const double f) { m_reserveFuel = Clamp(f, 0.0, 1.0); }
 
@@ -255,14 +254,13 @@ protected:
 
 	bool AITimeStep(float timeStep); // Called by controller. Returns true if complete
 
-	virtual void SetAlertState(AlertState as) { m_alertState = as; }
+	virtual void SetAlertState(AlertState as);
 
 	virtual void OnEnterHyperspace();
 	virtual void OnEnterSystem();
 
 	SpaceStation *m_dockedWith;
 	int m_dockedWithPort;
-	ShipFlavour m_shipFlavour;
 	Uint32 m_gunState[ShipType::GUNMOUNT_MAX];
 	float m_gunRecharge[ShipType::GUNMOUNT_MAX];
 	float m_gunTemperature[ShipType::GUNMOUNT_MAX];
@@ -279,11 +277,13 @@ private:
 	void TestLanded();
 	void UpdateAlertState();
 	void UpdateFuel(float timeStep, const vector3d &thrust);
+    void SetShipId(const ShipType::Id &shipId);
 	void OnEquipmentChange(Equip::Type e);
 	void EnterHyperspace();
 
 	shipstats_t m_stats;
-	ShipType *m_type;
+	const ShipType *m_type;
+	SceneGraph::ModelSkin m_skin;
 
 	FlightState m_flightState;
 	bool m_testLanded;
@@ -316,6 +316,7 @@ private:
 	int m_dockedWithIndex; // deserialisation
 
 	SceneGraph::Animation *m_landingGearAnimation;
+	ScopedPtr<NavLights> m_navLights;
 };
 
 

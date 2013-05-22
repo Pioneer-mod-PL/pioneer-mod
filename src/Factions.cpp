@@ -115,7 +115,7 @@ static int l_fac_govtype_weight(lua_State *L)
 	Faction *fac = l_fac_check(L, 1);
 	const char *typeName = luaL_checkstring(L, 2);
 	const Polit::GovType g = static_cast<Polit::GovType>(LuaConstants::GetConstant(L, "PolitGovType", typeName));
-	const Sint32 weight = luaL_checkinteger(L, 3);	// signed as we will need to compare with signed out of MTRand.Int32
+	const Sint32 weight = luaL_checkinteger(L, 3);	// signed as we will need to compare with signed out of Random.Int32
 
 	if (g < Polit::GOV_RAND_MIN || g > Polit::GOV_RAND_MAX) {
 		pi_lua_warn(L,
@@ -232,11 +232,11 @@ static int l_fac_colour(lua_State *L)
 static int l_fac_add_to_factions(lua_State *L)
 {
 	FactionBuilder *facbld = l_fac_check_builder(L, 1);
-	Faction *fac = facbld->fac;
 
 	const std::string factionName(luaL_checkstring(L, 2));
 
 	if (!facbld->registered && !facbld->skip) {
+		/* XXX maybe useful for debugging, leaving for now
 		if (facbld->fac->hasHomeworld) {
 			printf("l_fac_add_to_factions: added (%3d,%3d,%3d) f=%4.0f e=%2.2f '%s' [%s]\n"
 				, fac->homeworld.sectorX, fac->homeworld.sectorY, fac->homeworld.sectorZ, fac->foundingDate, fac->expansionRate, fac->name.c_str(), factionName.c_str());
@@ -244,6 +244,7 @@ static int l_fac_add_to_factions(lua_State *L)
 		else {
 			printf("l_fac_add_to_factions: added '%s' [%s]\n", fac->name.c_str(), factionName.c_str());
 		}
+		*/
 
 		// add the faction to the various faction data structures
 		s_factions.push_back(facbld->fac);
@@ -256,8 +257,10 @@ static int l_fac_add_to_factions(lua_State *L)
 
 		return 0;
 	} else if (facbld->skip) {
+		/* XXX maybe useful for debugging, leaving for now
 		printf("l_fac_add_to_factions: invalid homeworld, skipped (%3d,%3d,%3d) f=%4.0f e=%2.2f '%s' [%s]\n"
 				, fac->homeworld.sectorX, fac->homeworld.sectorY, fac->homeworld.sectorZ, fac->foundingDate, fac->expansionRate, fac->name.c_str(), factionName.c_str());
+		*/
 		return 0;
 	} else {
 		return luaL_error(L, "faction '%s' already added\n", facbld->fac->name.c_str());
@@ -446,7 +449,7 @@ const Color Faction::AdjustedColour(fixed population, bool inRange)
 	return result;
 }
 
-const Polit::GovType Faction::PickGovType(MTRand &rand) const
+const Polit::GovType Faction::PickGovType(Random &rand) const
 {
 	if( !govtype_weights.empty()) {
 		// if we roll a number between one and the total weighting...

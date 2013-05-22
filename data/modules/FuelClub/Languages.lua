@@ -131,7 +131,9 @@ Translate:AddFlavour('Russian','FuelClub',{
 	* Собственные запасы топлива,  независимые от предложения на открытом рынке.
 	* {hydrogen} по привлекательной цене.
 	* {military_fuel} продается без акцизов.
+	* {water} по сниженным ценам.
 	* {radioactives} - принимаются для утилизации бесплатно (при определенных условиях).
+	* Заправка топливного бака, по необходимости.
 
 Присоединяйтесь! Членство в Содружестве стоит всего лишь {membership_fee} в год.]],
 	member_intro = [[Здесь вы можете приобрести топливо и сдать радиоактивные отходы на утилизацию.]],
@@ -176,4 +178,36 @@ Translate:Add({Deutsch = {
 	["You are now a member. Your membership will expire on {expiry_date}."] = "Du bist nun Mitglied. Die Mitgliedschaft verfällt am {expiry_date}.",
 	["You must buy our {military_fuel} before we will take your {radioactives}"] = "Du musst unseren {military_fuel} kaufen, bevor wir deine {radioactives} annehmen",
 	["Begin trade"] = "Beginne Handel",
+}})
+
+  ---- CZECH / ČESKY ----
+
+Translate:AddFlavour('Czech','FuelClub',{
+	-- Translators: Feel free to change this in your language!
+	-- It's a proper name, so exact translation is not vital.
+	clubname = "Palivová-Kooperativa mezihvězdných pilotů",
+	welcome = 'Vítej v {clubname}',
+	nonmember_intro = [[{clubname} je nezávislá organizace, která si klade za cíl poskytovat svým členům cenově zvýhodněné palivo pro jejich lodě. Její pobočky lze nalézt po celé galaxii. Členské výhody zahrnují:
+
+	* Naše vlastní, na trhu nezávislé, zásoby paliva
+	* {hydrogen} za slevněné ceny
+	* {military_fuel} za slevněné ceny
+	* {water} za slevněné ceny
+	* {radioactives}, likvidace zdarma (viz podmínky)
+	* Fuel tank refilling, where necessary
+	* Doplnění paliva, kde je potřeba
+
+Přidej se k nám! Roční členství stojí pouhých {membership_fee}]],
+	member_intro = [[Zde si můžeš zakoupit palivo a zlikvidovat {radioactives}.]],
+	annual_fee = 400,
+})
+
+Translate:Add({Czech = {
+	["What conditions apply to {radioactives} disposal?"] = "Za jakých podmínek lze zlikvidovat {radioactives}?",
+	["We will only dispose of as many tonnes of {radioactives} as you have bought tonnes of {military_fuel} from us."] = "Pro {radioactives} platí následující pravidlo: zlikvidujeme ho tolik tun, kolik {military_fuel} jsi u nás koupil.",
+	["Apply for membership"] = "Pouze pro členy",
+	["Your membership application has been declined."] = "Vaše žádost o členství byla zamítnuta.",
+	["You are now a member. Your membership will expire on {expiry_date}."] = "Nyní jste členem. Vaše členství vyprší {expiry_date}.",
+	["You must buy our {military_fuel} before we will take your {radioactives}"] = "Nejdřív musíš koupit naše {military_fuel} než převezmeme tvůj {radioactives}",
+	["Begin trade"] = "Provést výměnu",
 }})

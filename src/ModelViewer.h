@@ -7,9 +7,10 @@
 // viewer for sgmodels
 
 #include "libs.h"
+#include "LuaManager.h"
+#include "NavLights.h"
 #include "graphics/Renderer.h"
 #include "graphics/Texture.h"
-#include "LuaManager.h"
 #include "scenegraph/SceneGraph.h"
 #include "ui/Context.h"
 
@@ -33,6 +34,7 @@ private:
 	void ClearModel();
 	void CreateTestResources();
 	void DrawBackground();
+	void DrawDockingLocators();
 	void DrawCollisionMesh();
 	void DrawGrid(const matrix4x4f &trans, float radius);
 	void DrawLog();
@@ -60,6 +62,7 @@ private:
 	//toggleable options
 	struct Options {
 		bool attachGuns;
+		bool showDockingLocators;
 		bool showCollMesh;
 		bool showGrid;
 		bool showLandingPad;
@@ -77,10 +80,11 @@ private:
 	Graphics::Texture *m_decalTexture;
 	float m_rotX, m_rotY, m_zoom;
 	float m_baseDistance;
-	MTRand m_rng;
+	Random m_rng;
 	SceneGraph::Animation *m_currentAnimation;
 	SceneGraph::Model *m_model;
 	Options m_options;
+	ScopedPtr<NavLights> m_navLights;
 	ScopedPtr<SceneGraph::Model> m_gunModel;
 	ScopedPtr<SceneGraph::Model> m_scaleModel;
 	std::string m_modelName;

@@ -138,9 +138,6 @@
     <ClCompile Include="..\..\src\ModelBody.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\mtrand.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\ObjectViewerView.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -184,9 +181,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ShipCpanelMultiFuncDisplays.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ShipFlavour.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ShipType.cpp">
@@ -420,6 +414,42 @@
     <ClCompile Include="..\..\src\LuaShipDef.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\NavLights.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Orbit.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\LuaPropertiedObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GeoPatchID.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PropertyMap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GeoPatch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GeoPatchContext.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GeoPatchJobs.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\LuaPropertiedObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PropertyMap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\JobQueue.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\CoreCount.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Aabb.h">
@@ -542,9 +572,6 @@
     <ClInclude Include="..\..\src\LuaSpace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaStarSystem.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\LuaTimer.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -561,9 +588,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ModelBody.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\mtrand.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Object.h">
@@ -623,9 +647,6 @@
     <ClInclude Include="..\..\src\ShipCpanelMultiFuncDisplays.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ShipFlavour.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\ShipType.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -669,9 +690,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\LuaMusic.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaSystemPath.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ShipSpinnerWidget.h">
@@ -782,9 +800,6 @@
     <ClInclude Include="..\..\src\LuaMatrix.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaSystemBody.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\LuaComms.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -861,6 +876,48 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\LuaMissile.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Random.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\LuaWrappable.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\NavLights.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Orbit.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PropertiedObject.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PropertyMap.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\GeoPatchID.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\GeoPatch.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\GeoPatchContext.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\GeoPatchJobs.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PropertiedObject.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PropertyMap.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\JobQueue.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\CoreCount.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

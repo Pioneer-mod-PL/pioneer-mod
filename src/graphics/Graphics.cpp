@@ -15,6 +15,8 @@ bool shadersAvailable = false;
 bool shadersEnabled = false;
 Material *vtxColorMaterial;
 Settings settings;
+static float g_fov = 85.f;
+static float g_fovFactor = 1.f;
 
 int GetScreenWidth()
 {
@@ -24,6 +26,22 @@ int GetScreenWidth()
 int GetScreenHeight()
 {
 	return settings.height;
+}
+
+float GetFov()
+{
+	return g_fov;
+}
+
+void SetFov(float fov)
+{
+	g_fov = fov;
+	g_fovFactor = 2 * tan(DEG2RAD(g_fov) / 2.f);
+}
+
+float GetFovFactor()
+{
+	return g_fovFactor;
 }
 
 Renderer* Init(Settings vs)
@@ -148,11 +166,6 @@ void Uninit()
 	delete vtxColorMaterial;
 }
 
-void SwapBuffers()
-{
-	SDL_GL_SwapBuffers();
-}
-
 bool AreShadersEnabled()
 {
 	return shadersEnabled;
@@ -163,7 +176,7 @@ std::vector<VideoMode> GetAvailableVideoModes()
 	std::vector<VideoMode> modes;
 	//querying modes using the current pixel format
 	//note - this has always been sdl_fullscreen, hopefully it does not matter
-	SDL_Rect **sdlmodes = SDL_ListModes(NULL, SDL_HWSURFACE | SDL_FULLSCREEN);
+	SDL_Rect **sdlmodes = SDL_ListModes(0, SDL_HWSURFACE | SDL_FULLSCREEN);
 
 	if (sdlmodes == 0)
 		OS::Error("Failed to query video modes");

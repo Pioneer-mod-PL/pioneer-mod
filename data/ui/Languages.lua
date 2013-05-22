@@ -46,6 +46,8 @@ Translate:Add({
 		['Toggle male/female'] = 'Toggle male/female',
 		['Make new face'] = 'Make new face',
 
+		['Commander'] = 'Commander',
+
 		['HARMLESS'] = 'Harmless',
 		['MOSTLY_HARMLESS'] = 'Mostly Harmless',
 		['POOR'] = 'Poor',
@@ -64,6 +66,7 @@ Translate:Add({
 		-- Missions
 		['Mission Details'] = 'Mission Details',
 		['No missions.'] = 'No missions.',
+		["%d days left"] = "Days left: %d",
 		['INACTIVE'] = 'Inactive', -- Complement of ACTIVE, COMPLETED and FAILED
 
 		-- Crew Tasks
@@ -171,6 +174,8 @@ Translate:Add({
 		['Toggle male/female'] = 'Mężczyzna/Kobieta',
 		['Make new face'] = 'Nowa twarz',
 
+		['Commander'] = 'Kapitan',
+
 		['HARMLESS'] = 'Nieszkodliwy',
 		['MOSTLY_HARMLESS'] = 'Przeważnie nieszkodliwy',
 		['POOR'] = 'Żółtodziób',
@@ -189,21 +194,22 @@ Translate:Add({
 		-- Missions
 		['Mission Details'] = 'Szczegóły misji',
 		['No missions.'] = 'Brak misji.',
+		["%d days left"] = "Pozostało dni: %d",
 		['INACTIVE'] = 'Nieaktywna', -- Complement of ACTIVE, COMPLETED and FAILED
 		
 		-- Crew Tasks
 		['Attempt to repair hull'] = 'Przystąpić do naprawy kadłuba',
 		['Not enough {alloy} to attempt a repair'] = '{alloy} - jest zbyt mało by rozpocząć naprawę.',
 		['Hull repaired by {name}, now at {repairPercent}%'] = '{name} naprawia kadłub, teraz jest {repairPercent}%',
-		['Hull repair attempt failed. Hull suffered minor damage.'] = 'Rozpoczęcie naprawy kadłuba nieudane. Kadłub doznał uszkodzeń.',
+		['Hull repair attempt failed. Hull suffered minor damage.'] = 'Naprawa kadłuba nieudana. Kadłub został nieznacznie uszkodzony.',
 		['Hull does not require repair.'] = 'Kadłub nie wymaga naprawy.',
 		['Destroy enemy ship'] = 'Zniszczyć wrogi statek',
-		['You must request launch clearance first, Commander.'] = 'Komandorze, najpierw musisz uzyskać zgodę na start.',
-		['You must launch first, Commander.'] = 'Komandorze, najpierw musisz wystartować.',
-		['We are in hyperspace, Commander.'] = 'Komandorze, jesteśmy w nadprzestrzeni',
-		['The ship is under station control, Commander.'] = 'Komandorze, statek jest pod kontrolą stacji.',
-		['You must first select a combat target, Commander.'] = 'Komandorze, najpierw musisz wskazać cel ataku.',
-		['You must first select a suitable navigation target, Commander.'] = 'Komandorze, najpierw musisz wskazać właściwy cel nawigacyjny.',
+		['You must request launch clearance first, Commander.'] = 'Kapitanie, najpierw musisz uzyskać zgodę na start.',
+		['You must launch first, Commander.'] = 'Kapitanie, najpierw musisz wystartować.',
+		['We are in hyperspace, Commander.'] = 'Kapitanie, jesteśmy w nadprzestrzeni',
+		['The ship is under station control, Commander.'] = 'Kapitanie, statek jest pod kontrolą stacji.',
+		['You must first select a combat target, Commander.'] = 'Kapitanie, najpierw musisz wskazać cel ataku.',
+		['You must first select a suitable navigation target, Commander.'] = 'Kapitanie, najpierw musisz wskazać właściwy cel nawigacyjny.',
 		['There is nobody else on board able to fly this ship.'] = 'Nikt więcej na pokładzie nie jest zdolny pilotować ten statek.',
 		['Pilot seat is now occupied by {name}'] = '{name} zajmuje fotel pilota.',
 		['Dock at current target'] = 'Dokować do wskazanego celu',
@@ -273,12 +279,16 @@ Translate:Add({
 		['Equipment'] = 'Equipo',
 		['{quantity} Shield Generators'] = '{quantity} Generadores de Escudo',
 		['{quantity} Occupied Passenger Cabins'] = '{quantity} Cabinas de Pasajeros Ocupadas',
-		['{quantity} Unoccupied Passenger Cabins'] = '{quantity} Cabinas de Pasajeros Libres',
+		['{quantity} Unoccupied Passenger Cabins'] = '{quantity} Cabinas de Pasajeros Vacías',
 
 		-- Ship Information
 		['Ship Information'] = 'Info de la Nave',
 		['Weight empty:'] = 'Peso en vacío:',
 		['{range} light years ({maxRange} max)'] = '{range} años luz ({maxRange} max)',
+		['Minimum crew'] = 'Tripulación mínima',
+		['Crew cabins'] = 'Cabinas de Tripulación',
+		['free'] = 'vacío',
+		['max'] = 'máx',
 
 		-- Personal information
 		['Personal Information'] = 'Info Personal',
@@ -289,6 +299,10 @@ Translate:Add({
 		['Rank:'] = 'Rango:',
 		['Male'] = 'Hombre',
 		['Female'] = 'Mujer',
+		['Toggle male/female'] = 'Hombre/Mujer',
+		['Make new face'] = 'Crear nuevo rostro',
+
+		['Commander'] = 'Capitán',
 
 		['HARMLESS'] = 'Inofensivo',
 		['MOSTLY_HARMLESS'] = 'En su mayoría inofensivo',
@@ -308,6 +322,49 @@ Translate:Add({
 		-- Missions
 		['Mission Details'] = 'Detalles de Misión',
 		['No missions.'] = 'Sin Misiones.',
+		['INACTIVE'] = 'Inactivo', -- Complement of ACTIVE, COMPLETED and FAILED
+
+		-- Crew Tasks
+		['Attempt to repair hull'] = 'Reparar casco',
+		['Not enough {alloy} to attempt a repair'] = 'No hay suficiente {alloy} para la reparación',
+		['Hull repaired by {name}, now at {repairPercent}%'] = 'Casco reparado por {name}, ahora al {repairPercent}%',
+		['Hull repair attempt failed. Hull suffered minor damage.'] = 'Intento de reparación del casco fracasado. El casco ha sufrido daños menores.',
+		['Hull does not require repair.'] = 'El casco no requiere reparación.',
+		['Destroy enemy ship'] = 'Destruir nave enemiga',
+		['You must request launch clearance first, Commander.'] = 'Primero debe solicitar autorización para el despegue, Capitán.',
+		['You must launch first, Commander.'] = 'Primero debe despegar, Capitán.',
+		['We are in hyperspace, Commander.'] = 'Estamos en el hiperespacio, Capitán.',
+		['The ship is under station control, Commander.'] = 'La nave esta bajo control de la estación, Capitán.',
+		['You must first select a combat target, Commander.'] = 'Primero debe seleccionar un objetivo de combate, Capitán.',
+		['You must first select a suitable navigation target, Commander.'] = 'Primero debe seleccionar un objetivo de navegación válido, Capitán.',
+		['There is nobody else on board able to fly this ship.'] = 'No hay nadie mas a bordo capaz de pilotar la nave.',
+		['Pilot seat is now occupied by {name}'] = 'Actualmente el puesto de piloto esta ocupado por {name}',
+		['Dock at current target'] = 'Atracar en el objetivo actual',
+
+		-- Crew Roster
+		['Name'] = 'Nombre',
+		['Position'] = 'Puesto',
+		['Wage'] = 'Sueldo',
+		['Owed'] = 'Deuda',
+		['Next paid'] = 'Próxima paga',
+		['More info...'] = 'Mas info...',
+		['General crew'] = 'Tripulación general',
+		['Dismiss'] = 'Despedir',
+		['Qualification scores'] = 'Calificación',
+		['Engineering:'] = 'Ingeniería',
+		['Piloting:'] = 'Pilotaje:',
+		['Navigation:'] = 'Navegación:',
+		['Sensors:'] = 'Sensores:',
+		['Employment'] = 'Ocupación',
+		['Negotiate'] = 'Negociar',
+		['Crew Roster'] = 'Lista',
+		['Give orders to crew'] = 'Dar órdenes',
+
+		-- Taunts
+		["I'm tired of working for nothing. Don't you know what a contract is?"] = "Estoy harto de trabajar por nada. Conoce la palabra contrato?",
+		["It's been great working for you. If you need me again, I'll be here a while."] = "Ha sido estupendo trabajar para usted. Si me necesita de nuevo, Estaré por aquí un tiempo.",
+		["You're going to regret sacking me!"] = "Va a lamentar haberme explotado!",
+		["Good riddance to you, too."] = "Buen viaje, igualmente.",
 
 		-- Orbital analysis
 		['Orbit'] = 'Orbita',
@@ -386,6 +443,10 @@ Translate:Add({
 		['Ship Information'] = 'Информация о корабле',
 		['Weight empty:'] = 'Собств.вес корабля:',
 		['{range} light years ({maxRange} max)'] = '{range} св.лет (из {maxRange} макс.)',
+		['Minimum crew'] = 'Минимальный экипаж',
+		['Crew cabins'] = 'Каюты экипажа',
+		['free'] = 'свободно',
+		['max'] = 'макс.',
 		
 		-- Personal information
 		['Personal Information'] = 'Персональная информация',
@@ -396,6 +457,9 @@ Translate:Add({
 		['Rank:'] = 'Ранг:',
 		['Male'] = 'Мужчина',
 		['Female'] = 'Женщина',
+		['Toggle male/female'] = 'Пол муж./жен.',
+		['Make new face'] = 'Новое лицо',
+		['Commander'] = 'Капитан',
 
 		['HARMLESS'] = 'Безобидный',
 		['MOSTLY_HARMLESS'] = 'Почти безобидный',
@@ -415,7 +479,50 @@ Translate:Add({
 		-- Missions
 		['Mission Details'] = 'О задании',
 		['No missions.'] = 'Нет заданий.',
+		["%d days left"] = "Осталось дней: %d",
 		['INACTIVE'] = 'Неактивно', -- Complement of ACTIVE, COMPLETED and FAILED
+		
+				-- Crew Tasks
+		['Attempt to repair hull'] = 'Попытка починки корпуса',
+		['Not enough {alloy} to attempt a repair'] = 'Недостаточно {alloy} для проведения ремонта',
+		['Hull repaired by {name}, now at {repairPercent}%'] = '{name} отремонтировал корпус до {repairPercent}%',
+		['Hull repair attempt failed. Hull suffered minor damage.'] = 'Попытка ремонта не удалась. Корпус получил незначительные повреждения.',
+		['Hull does not require repair.'] = 'Корпус не требует ремонта.',
+		['Destroy enemy ship'] = 'Уничтожить корабль противника',
+		['You must request launch clearance first, Commander.'] = 'Сначала мы должны запросить разрешение на взлет, капитан!',
+		['You must launch first, Commander.'] = 'Сначала мы должны взлететь, капитан.',
+		['We are in hyperspace, Commander.'] = 'Мы в гиперпространстве, капитан!',
+		['The ship is under station control, Commander.'] = 'Корабль под контролем станции, капитан.',
+		['You must first select a combat target, Commander.'] = 'Вы должны указать боевую цель, капитан!',
+		['You must first select a suitable navigation target, Commander.'] = 'Сначала вы должны указать навигационную цель, капитан.',
+		['There is nobody else on board able to fly this ship.'] = 'Больше никто на борту не умеет управлять этим кораблем.',
+		['Pilot seat is now occupied by {name}'] = 'Обязанности пилота сейчас выполняет {name}.',
+		['Dock at current target'] = 'Стыковка с выбранной целью.',
+
+		-- Crew Roster
+		['Name'] = 'Имя',
+		['Position'] = 'Должность',
+		['Wage'] = 'Оклад',
+		['Owed'] = 'Долг',
+		['Next paid'] = 'След.платеж',
+		['More info...'] = 'Доп.информация...',
+		['General crew'] = 'Основной экипаж',
+		['Dismiss'] = 'Уволить',
+		['Qualification scores'] = 'Ур.квалификации',
+		['Engineering:'] = 'Инженерия:',
+		['Piloting:'] = 'Пилотирование:',
+		['Navigation:'] = 'Навигация:',
+		['Sensors:'] = 'Сенсоры:',
+		['Employment'] = 'Занятость',
+		['Negotiate'] = 'Условия',
+		['Crew Roster'] = 'Список экипажа',
+		['Give orders to crew'] = 'Приказы экипажу',
+
+		-- Taunts
+		["I'm tired of working for nothing. Don't you know what a contract is?"] = "Я устал работать даром. Разве вы не знаете, что такое контракт?",
+		["It's been great working for you. If you need me again, I'll be here a while."] = "Работать на вас было одним удовольствием. Если вновь захотите меня нанять - некоторое время я буду здесь.",
+		["You're going to regret sacking me!"] = "Вы пожалеете о том, что уволили меня!",
+		["Good riddance to you, too."] = "Скатертью дорожка!",
 		
 		-- Orbital analysis
 		['Orbit'] = 'Орбита',
@@ -508,6 +615,134 @@ Die Kreisbahn-Geschwindigkeit wird für eine tangentiale Geschwindigkeit angegeb
 Die Landegeschwindigkeit ist ein absolutes Minimum und ist auch tangential. Eine geringere Geschwindigkeit und ein kleinerer Winkel wird in einem Kurs resultieren, der die Oberfläche von {name} schneidet.
 
 Die Fluchtgeschwindigkeit funktioniert theoretisch gesehen in alle Richtungen, solange das Schiff auf dem Weg mit {name} kollidiert.
+		]]
+	}
+})
+
+Translate:Add({
+	Czech = {
+		-- Main menu
+		['Start at Earth']    = 'Start: Earth',
+		['Start at New Hope'] = 'Start: New Hope',
+		['Start at Lave']     = 'Start: Lave',
+		['Load game']         = 'Načíst hru',
+		['Options']           = 'Možnosti',
+		['Quit']              = 'Ukončit',
+
+		-- Generic file dialog
+		['Select file...'] = 'Otevřít soubor...',
+		['Select']         = 'Otevřít',
+		['Cancel']         = 'Zrušit',
+
+		-- Load dialog
+		['Select game to load...'] = 'Načíst hru...',
+
+		-- Equipment
+		['Equipment'] = 'Vybavení',
+		['{quantity} Shield Generators'] = '{quantity} generátory štítů',
+		['{quantity} Occupied Passenger Cabins'] = '{quantity} obsazených pasažérských kabin',
+		['{quantity} Unoccupied Passenger Cabins'] = '{quantity} volných pasažérských kabin',
+
+		-- Ship Information
+		['Ship Information'] = 'Informace o lodi',
+		['Weight empty:'] = 'Prázdná váha:',
+		['{range} light years ({maxRange} max)'] = '{range} ly ({maxRange} max)',
+		['Minimum crew'] = 'Minimální posádka',
+		['Crew cabins'] = 'Kabin pro posádku',
+		['free'] = 'volných',
+		['max'] = 'max',
+
+		-- Personal information
+		['Personal Information'] = 'Osobní informace',
+		['Combat'] = 'Bojové',
+		['Rating:'] = 'Hodnocení:',
+		['Kills:'] = 'Zabitých:',
+		['Military'] = 'Vojenské',
+		['Rank:'] = 'Hodnost:',
+		['Male'] = 'Muž',
+		['Female'] = 'Žena',
+		['Toggle male/female'] = 'Změnit muž/žena',
+		['Make new face'] = 'Vytvořit jiný obličej',
+
+		['Commander'] = 'Velitel',
+
+		['HARMLESS'] = 'Neškodný',
+		['MOSTLY_HARMLESS'] = 'Převážně neškodný',
+		['POOR'] = 'Ubohý',
+		['AVERAGE'] = 'Průměrný',
+		['ABOVE_AVERAGE'] = 'Nadprůměrný',
+		['COMPETENT'] = 'Schopný',
+		['DANGEROUS'] = 'Nebezpečný',
+		['DEADLY'] = 'Smrtící',
+		['ELITE'] = 'ELITA',
+
+		-- Economy & Trade
+		['Economy & Trade'] = 'Ekonomika & obchod',
+		['Total: '] = 'Celkem: ',
+		['Fuel tank full.'] = 'Palivová nádrž plná.',
+
+		-- Missions
+		['Mission Details'] = 'Detaily mise',
+		['No missions.'] = 'Žádné mise.',
+		["%d days left"] = "Zbývá dnů: %d",
+		['INACTIVE'] = 'Neprobíhá', -- Complement of ACTIVE, COMPLETED and FAILED
+
+		-- Crew Tasks
+		['Attempt to repair hull'] = 'Zkus opravit trup',
+		['Not enough {alloy} to attempt a repair'] = 'Nedostatek {alloy} k pokusu o opravu',
+		['Hull repaired by {name}, now at {repairPercent}%'] = '{name} opravil trup, stav {repairPercent}%',
+		['Hull repair attempt failed. Hull suffered minor damage.'] = 'Neúspěšný pokus o opravu trupu. Trup utrpěl menší poškození.',
+		['Hull does not require repair.'] = 'Trup nepotřebuje opravu.',
+		['Destroy enemy ship'] = 'Znič nepřátelskou loď',
+		['You must request launch clearance first, Commander.'] = 'Nejdříve je nutné vyžádat povolení k odletu, veliteli.',
+		['You must launch first, Commander.'] = 'Nejdříve je nutné odstartovat, veliteli.',
+		['We are in hyperspace, Commander.'] = 'Jsme v hyperprostoru, veliteli.',
+		['The ship is under station control, Commander.'] = 'Loď je pod kontrolou stanice, veliteli.',
+		['You must first select a combat target, veliteli.'] = 'Nejdříve je nutné vybrat bojový cíl, veliteli.',
+		['You must first select a suitable navigation target, veliteli.'] = 'Nejdříve je nutné vybrat vhodný cíl navigace, veliteli.',
+		['There is nobody else on board able to fly this ship.'] = 'Na palube není nikdo jiný schopen pilotovat loď.',
+		['Pilot seat is now occupied by {name}'] = 'Nyní pilotuje {name}',
+		['Dock at current target'] = 'Přistaň na zvoleném cíli',
+
+		-- Crew Roster
+		['Name'] = 'Jméno',
+		['Position'] = 'Pozice',
+		['Wage'] = 'Mzda',
+		['Owed'] = 'Dluh',
+		['Next paid'] = 'Další platba',
+		['More info...'] = 'Další info...',
+		['General crew'] = 'Základní posádka',
+		['Dismiss'] = 'Propustit',
+		['Qualification scores'] = 'Kvalifikační hodnocení',
+		['Engineering:'] = 'Údržba:',
+		['Piloting:'] = 'Pilotáž:',
+		['Navigation:'] = 'Navigace:',
+		['Sensors:'] = 'Senzory:',
+		['Employment'] = 'Zaměstnanost',
+		['Negotiate'] = 'Vyjenávat',
+		['Crew Roster'] = 'Seznam posádky',
+		['Give orders to crew'] = 'Dát posádce rozkazy',
+
+		-- Taunts
+		["I'm tired of working for nothing. Don't you know what a contract is?"] = "Už mě unavuje pracovat pro nic za nic. Víš vůbec co to je smlouva?",
+		["It's been great working for you. If you need me again, I'll be here a while."] = "Dobře se mi s tebou pracovalo. Pokud mě budeš zase potřebovat, jsem tu v cukuletu.",
+		["You're going to regret sacking me!"] = "Toho budeš litovat, naštvat mě!",
+		["Good riddance to you, too."] = "Spánembohem i tobě.",
+
+		-- Orbital analysis
+		['Orbit'] = 'Orbita',
+		['Orbital Analysis'] = 'Orbitální analýza',
+		['Located {distance}km from the centre of {name}:'] = '{distance}km od centra {name}:',
+		['Circular orbit speed:'] = 'Kruhová orbitální rychlost',
+		['Escape speed:'] = 'Úniková rychlost:',
+		['Descent-to-ground speed:'] = 'Přistávací rychlost:',
+		['Notes:'] = 'Notes:',
+		ORBITAL_ANALYSIS_NOTES = [[
+Úhlová orbitální rychlost je vztažena k tangenciální rychlosti. Loď by se měla pohybovat kolmo k ose lodi/{name}.
+
+Descent speed is an absolute minimum, and is also tangential. A slower speed or a lower angle will result in a course which intersects with the surface of {name}.
+
+Úniková rychlost může být (teoreticky) libovolná ve všech směrech, pokud se trajektorie lodi nenáchází na kolizním kurzu s {name}.
 		]]
 	}
 })

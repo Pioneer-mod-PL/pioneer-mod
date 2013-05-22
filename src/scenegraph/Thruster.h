@@ -20,9 +20,10 @@ namespace SceneGraph {
 class Thruster : public Node {
 public:
 	Thruster(Graphics::Renderer *, bool linear, const vector3f &pos, const vector3f &dir);
-	Thruster(const Thruster&);
-	Node *Clone();
-	virtual const char *GetTypeName() { return "Thruster"; }
+	Thruster(const Thruster&, NodeCopyCache *cache = 0);
+	Node *Clone(NodeCopyCache *cache = 0);
+	virtual void Accept(NodeVisitor &v);
+	virtual const char *GetTypeName() const { return "Thruster"; }
 	virtual void Render(const matrix4x4f &trans, RenderData *rd);
 
 private:

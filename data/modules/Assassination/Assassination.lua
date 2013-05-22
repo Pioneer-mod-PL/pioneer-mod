@@ -131,7 +131,9 @@ local makeAdvert = function (station)
 	local danger = Engine.rand:Integer(1,4)
 	local reward = Engine.rand:Number(2100, 7000) * danger
 
-	local shipdefs = build_array(filter(function (k,def) return def.tag == 'SHIP' and def.hullMass >= (danger * 17) and def.equipSlotCapacity.ATMOSHIELD > 0 end, pairs(ShipDef)))
+	-- XXX hull mass is a bad way to determine suitability for role
+	--local shipdefs = build_array(filter(function (k,def) return def.tag == 'SHIP' and def.hullMass >= (danger * 17) and def.equipSlotCapacity.ATMOSHIELD > 0 end, pairs(ShipDef)))
+	local shipdefs = build_array(filter(function (k,def) return def.tag == 'SHIP' and def.defaultHyperdrive ~= 'NONE' and def.equipSlotCapacity.ATMOSHIELD > 0 end, pairs(ShipDef)))
 	local shipdef = shipdefs[Engine.rand:Integer(1,#shipdefs)]
 	local shipid = shipdef.id
 	local shipname = shipdef.name
@@ -406,31 +408,94 @@ end
 
 local onClick = function (mission)
 	local ass_flavours = Translate:GetFlavours('Assassination')
-	local dist = Game.system:DistanceTo(mission.location)
+	local dist = Game.system and string.format("%.2f", Game.system:DistanceTo(mission.location)) or "???"
 	return ui:Grid(2,1)
 		:SetColumn(0,{ui:VBox(10):PackEnd({ui:MultiLineText((ass_flavours[mission.flavour].introtext):interp({
 														name   = mission.client.name,
 														target = mission.target,
 														system = mission.location:GetStarSystem().name,
 														cash   = Format.Money(mission.reward),
-														dist  = string.format("%.2f", dist)})
+														dist  = dist})
 										),
+										ui:Margin(10),
 										ui:Grid(2,1)
 											:SetColumn(0, {
-												ui:VBox():PackEnd(ui:MultiLineText(t('assmissiondetail')))
+												ui:VBox():PackEnd({
+													ui:Label(t("Target name:"))
+												})
 											})
 											:SetColumn(1, {
 												ui:VBox():PackEnd({
-													ui:Label(mission.target),
-													ui:Label(mission.location:GetSystemBody().name),
-													ui:Label(mission.location:GetStarSystem().name.." ("..mission.location.sectorX..","..mission.location.sectorY..","..mission.location.sectorZ..")"),
-													ui:Label(mission.shipname),
-													ui:Label(mission.shipregid),
-													ui:Label(Format.Date(mission.due)),
-													ui:Margin(10),
-													ui:Label(math.ceil(dist).." "..t("ly"))
+													ui:MultiLineText(mission.target)
+												})
+											}),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:Label(t("Spaceport:"))
 												})
 											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:MultiLineText(mission.location:GetSystemBody().name)
+												})
+											}),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:Label(t("System:"))
+												})
+											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:MultiLineText(mission.location:GetStarSystem().name.." ("..mission.location.sectorX..","..mission.location.sectorY..","..mission.location.sectorZ..")")
+												})
+											}),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:Label(t("Ship:"))
+												})
+											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:MultiLineText(mission.shipname)
+												})
+											}),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:Label(t("Ship ID:"))
+												})
+											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:Label(mission.shipregid),
+												})
+											}),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:MultiLineText(t("Target will be leaving spaceport at:"))
+												})
+											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:Label(Format.Date(mission.due))
+												})
+											}),
+										ui:Margin(5),
+										ui:Grid(2,1)
+											:SetColumn(0, {
+												ui:VBox():PackEnd({
+													ui:Label(t("Distance:"))
+												})
+											})
+											:SetColumn(1, {
+												ui:VBox():PackEnd({
+													ui:Label(dist.." "..t("ly"))
+												})
+											}),
 		})})
 		:SetColumn(1, {
 			ui:VBox(10):PackEnd(UI.InfoFace.New(mission.client))

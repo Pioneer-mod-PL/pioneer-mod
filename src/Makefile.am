@@ -19,7 +19,6 @@ noinst_HEADERS = \
 	AmbientSounds.h \
 	AnimationCurves.h \
 	Background.h \
-	BezierCurve.h \
 	Body.h \
 	ByteRange.h \
 	Camera.h \
@@ -29,12 +28,14 @@ noinst_HEADERS = \
 	CityOnPlanet.h \
 	Color.h \
 	CommodityTradeWidget.h \
+	CoreCount.h \
 	Cutscene.h \
 	CRC32.h \
 	DeadVideoLink.h \
 	DeathView.h \
 	DeleteEmitter.h \
 	DynamicBody.h \
+	Easing.h \
 	EnumStrings.h \
 	EquipSet.h \
 	EquipType.h \
@@ -53,6 +54,7 @@ noinst_HEADERS = \
 	HyperspaceCloud.h \
 	IniConfig.h \
 	Intro.h \
+	JobQueue.h \
 	GameConfig.h \
 	KeyBindings.h \
 	Lang.h \
@@ -80,15 +82,13 @@ noinst_HEADERS = \
 	LuaObject.h \
 	LuaPushPull.h \
 	LuaRef.h \
-	LuaSystemBody.h \
-	LuaSystemPath.h \
 	LuaSerializer.h \
 	LuaShipDef.h \
 	LuaSpace.h \
-	LuaStarSystem.h \
 	LuaTable.h \
 	LuaTimer.h \
 	LuaUtils.h \
+	LuaWrappable.h \
 	MarketAgent.h \
 	MathUtil.h \
 	Missile.h \
@@ -96,8 +96,10 @@ noinst_HEADERS = \
 	ModelCache.h \
 	ModManager.h \
 	ModelViewer.h \
+	NavLights.h \
 	Object.h \
 	ObjectViewerView.h \
+	Orbit.h \
 	OS.h \
 	PersistSystemData.h \
 	Pi.h \
@@ -106,9 +108,11 @@ noinst_HEADERS = \
 	PngWriter.h \
 	Polit.h \
 	Projectile.h \
+	PropertiedObject.h \
+	PropertyMap.h \
 	Quaternion.h \
+	Random.h \
 	RefCounted.h \
-	RefList.h \
 	SDLWrappers.h \
 	SectorView.h \
 	Serializer.h \
@@ -130,7 +134,6 @@ noinst_HEADERS = \
 	ShipController.h \
 	ShipCpanel.h \
 	ShipCpanelMultiFuncDisplays.h \
-	ShipFlavour.h \
 	ShipSpinnerWidget.h \
 	ShipType.h \
 	Sound.h \
@@ -154,7 +157,6 @@ noinst_HEADERS = \
 	gameconsts.h \
 	libs.h \
 	matrix4x4.h \
-	mtrand.h \
 	perlin.h \
 	utils.h \
 	vector2.h \
@@ -172,6 +174,7 @@ pioneer_SOURCES	= \
 	ChatForm.cpp \
 	CityOnPlanet.cpp \
 	CommodityTradeWidget.cpp \
+	CoreCount.cpp \
 	CRC32.cpp \
 	DeadVideoLink.cpp \
 	DeathView.cpp \
@@ -189,10 +192,15 @@ pioneer_SOURCES	= \
 	GalacticView.cpp \
 	Game.cpp \
 	GameMenuView.cpp \
+	GeoPatch.cpp \
+	GeoPatchContext.cpp \
+	GeoPatchID.cpp \
+	GeoPatchJobs.cpp \
 	GeoSphere.cpp \
 	HyperspaceCloud.cpp \
 	IniConfig.cpp \
 	Intro.cpp \
+	JobQueue.cpp \
 	GameConfig.cpp \
 	KeyBindings.cpp \
 	Lang.cpp \
@@ -222,6 +230,7 @@ pioneer_SOURCES	= \
 	LuaObject.cpp \
 	LuaPlanet.cpp \
 	LuaPlayer.cpp \
+	LuaPropertiedObject.cpp \
 	LuaRand.cpp \
 	LuaRef.cpp \
 	LuaSystemBody.cpp \
@@ -242,13 +251,16 @@ pioneer_SOURCES	= \
 	ModelCache.cpp \
 	ModManager.cpp \
 	ModelViewer.cpp \
+	NavLights.cpp \
 	ObjectViewerView.cpp \
+	Orbit.cpp \
 	Pi.cpp \
 	Planet.cpp \
 	Player.cpp \
 	PngWriter.cpp \
 	Polit.cpp \
 	Projectile.cpp \
+	PropertyMap.cpp \
 	SDLWrappers.cpp \
 	SectorView.cpp \
 	Serializer.cpp \
@@ -270,7 +282,6 @@ pioneer_SOURCES	= \
 	ShipController.cpp \
 	ShipCpanel.cpp \
 	ShipCpanelMultiFuncDisplays.cpp \
-	ShipFlavour.cpp \
 	ShipSpinnerWidget.cpp \
 	ShipType.cpp \
 	Sound.cpp \
@@ -288,7 +299,6 @@ pioneer_SOURCES	= \
 	View.cpp \
 	WorldView.cpp \
 	main.cpp \
-	mtrand.cpp \
 	perlin.cpp \
 	utils.cpp \
 	enum_table.cpp
@@ -309,7 +319,7 @@ pioneer_LDADD = \
 pioneer_LDADD += \
 	$(FREETYPE_LIBS) $(GLEW_LIBS) $(GLU_LIBS) $(GL_LIBS) \
 	$(SDL_LIBS) $(SIGC_LIBS) $(LUA_LIBS) $(VORBIS_LIBS) \
-	$(PNG_LIBS) $(ASSIMP_LIBS)
+	$(PNG_LIBS) $(ASSIMP_LIBS) $(EXTRA_LIBS)
 
 if BUILD_WIN32
 pioneer_LDFLAGS = -Wl,-Map=pioneer.map
@@ -327,7 +337,8 @@ tests_SOURCES = \
 	test_StringF.cpp \
 	FileSystem.cpp \
 	FileSourceZip.cpp \
-	test_FileSystem.cpp
+	test_FileSystem.cpp \
+	test_Random.cpp
 TESTS = tests
 tests_LDADD = \
 	collider/libcollider.a \
@@ -335,7 +346,9 @@ tests_LDADD = \
 	graphics/libgraphics.a \
 	terrain/libterrain.a \
     posix/libposix.a \
-	../contrib/miniz/libminiz.a
+	../contrib/miniz/libminiz.a \
+	../contrib/jenkins/libjenkins.a \
+	$(SIGC_LIBS)
 
 uitest_SOURCES = \
 	uitest.cpp \

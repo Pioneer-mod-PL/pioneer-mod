@@ -7,6 +7,7 @@
 #include "Serializer.h"
 #include "Sfx.h"
 #include "Space.h"
+#include "EnumStrings.h"
 #include "collider/collider.h"
 #include "scenegraph/SceneGraph.h"
 
@@ -29,13 +30,22 @@ void CargoBody::Init()
 {
 	m_hitpoints = 1.0f;
 	SetLabel(Equip::types[m_type].name);
-	SetModel("cargo");
 	SetMassDistributionFromModel();
+
+	std::vector<Color4ub> colors;
+	//metallic blue-orangeish color scheme
+	colors.push_back(Color4ub(255, 198, 64));
+	colors.push_back(Color4ub(0, 222, 255));
+	colors.push_back(Color4ub(255, 255, 255));
+	GetModel()->SetColors(colors);
+
+	Properties().Set("type", EnumStrings::GetString("EquipType", m_type));
 }
 
 CargoBody::CargoBody(Equip::Type t)
 {
 	m_type = t;
+	SetModel("cargo");
 	Init();
 	SetMass(1.0);
 }
@@ -64,5 +74,5 @@ bool CargoBody::OnCollision(Object *b, Uint32 flags, double relVel)
 void CargoBody::Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	GetModel()->SetLabel(Equip::types[m_type].name);
-	RenderModel(r, viewCoords, viewTransform);
+	RenderModel(r, camera, viewCoords, viewTransform);
 }

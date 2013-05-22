@@ -2,7 +2,6 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaObject.h"
-#include "LuaSystemPath.h"
 #include "LuaUtils.h"
 #include "EnumStrings.h"
 #include "Body.h"
@@ -34,12 +33,6 @@
  *
  *   stable
  */
-static int l_body_attr_label(lua_State *l)
-{
-	Body *b = LuaObject<Body>::CheckFromLua(1);
-	lua_pushstring(l, b->GetLabel().c_str());
-	return 1;
-}
 
 /*
  * Attribute: seed
@@ -94,8 +87,8 @@ static int l_body_attr_path(lua_State *l)
 		return 1;
 	}
 
-	SystemPath path = sbody->path;
-	LuaSystemPath::PushToLua(&path);
+	const SystemPath path(sbody->path);
+	LuaObject<SystemPath>::PushToLua(path);
 
 	return 1;
 }
@@ -294,6 +287,8 @@ template <> const char *LuaObject<Body>::s_type = "Body";
 
 template <> void LuaObject<Body>::RegisterClass()
 {
+	const char *l_parent = "PropertiedObject";
+
 	static luaL_Reg l_methods[] = {
 		{ "IsDynamic",  l_body_is_dynamic  },
 		{ "DistanceTo", l_body_distance_to },
@@ -301,7 +296,6 @@ template <> void LuaObject<Body>::RegisterClass()
 	};
 
 	static luaL_Reg l_attrs[] = {
-		{ "label",         l_body_attr_label          },
 		{ "seed",          l_body_attr_seed           },
 		{ "path",          l_body_attr_path           },
 		{ "type",          l_body_attr_type           },
@@ -311,5 +305,6 @@ template <> void LuaObject<Body>::RegisterClass()
 		{ 0, 0 }
 	};
 
-	LuaObjectBase::CreateClass(s_type, NULL, l_methods, l_attrs, NULL);
+	LuaObjectBase::CreateClass(s_type, l_parent, l_methods, l_attrs, 0);
+	LuaObjectBase::RegisterPromotion(l_parent, s_type, LuaObject<Body>::DynamicCastPromotionTest);
 }

@@ -35,13 +35,11 @@
 #include "LuaRef.h"
 #include "LuaShipDef.h"
 #include "LuaSpace.h"
-#include "LuaStarSystem.h"
-#include "LuaSystemBody.h"
-#include "LuaSystemPath.h"
 #include "LuaTimer.h"
 #include "Missile.h"
 #include "ModelCache.h"
 #include "ModManager.h"
+#include "NavLights.h"
 #include "ObjectViewerView.h"
 #include "OS.h"
 #include "Planet.h"
@@ -75,8 +73,10 @@
 #include "graphics/Renderer.h"
 #include "gui/Gui.h"
 #include "scenegraph/Model.h"
+#include "scenegraph/Lua.h"
 #include "ui/Context.h"
 #include "ui/Lua.h"
+#include "CoreCount.h"
 #include <algorithm>
 #include <sstream>
 
@@ -114,7 +114,7 @@ SystemInfoView *Pi::systemInfoView;
 ShipCpanel *Pi::cpan;
 LuaConsole *Pi::luaConsole;
 Game *Pi::game;
-MTRand Pi::rng;
+Random Pi::rng;
 float Pi::frameTime;
 #if WITH_DEVKEYS
 bool Pi::showDebugInfo;
@@ -137,6 +137,7 @@ ObjectViewerView *Pi::objectViewerView;
 #endif
 
 Sound::MusicPlayer Pi::musicPlayer;
+ScopedPtr<JobQueue> Pi::jobQueue;
 
 static void draw_progress(float progress)
 {
@@ -153,6 +154,8 @@ static void draw_progress(float progress)
 
 static void LuaInit()
 {
+	LuaObject<PropertiedObject>::RegisterClass();
+
 	LuaObject<Body>::RegisterClass();
 	LuaObject<Ship>::RegisterClass();
 	LuaObject<SpaceStation>::RegisterClass();
@@ -161,10 +164,11 @@ static void LuaInit()
 	LuaObject<Player>::RegisterClass();
 	LuaObject<Missile>::RegisterClass();
 	LuaObject<CargoBody>::RegisterClass();
-	LuaStarSystem::RegisterClass();
-	LuaSystemPath::RegisterClass();
-	LuaSystemBody::RegisterClass();
-	LuaObject<MTRand>::RegisterClass();
+
+	LuaObject<StarSystem>::RegisterClass();
+	LuaObject<SystemPath>::RegisterClass();
+	LuaObject<SystemBody>::RegisterClass();
+	LuaObject<Random>::RegisterClass();
 	LuaObject<Faction>::RegisterClass();
 
 	LuaObject<LuaChatForm>::RegisterClass();
@@ -192,6 +196,7 @@ static void LuaInit()
 	// XXX sigh
 	UI::Lua::Init();
 	GameUI::Lua::Init();
+	SceneGraph::Lua::Init();
 
 	// XXX load everything. for now, just modules
 	lua_State *l = Lua::manager->GetLuaState();
@@ -215,17 +220,19 @@ static void LuaInitGame() {
 	LuaEvent::Clear();
 }
 
-SceneGraph::Model *Pi::FindModel(const std::string &name)
+SceneGraph::Model *Pi::FindModel(const std::string &name, bool allowPlaceholder)
 {
 	SceneGraph::Model *m = 0;
 	try {
 		m = Pi::modelCache->FindModel(name);
 	} catch (ModelCache::ModelNotFoundException) {
 		printf("Could not find model: %s\n", name.c_str());
-		try {
-			m = Pi::modelCache->FindModel("error");
-		} catch (ModelCache::ModelNotFoundException) {
-			Error("Could not find placeholder model");
+		if (allowPlaceholder) {
+			try {
+				m = Pi::modelCache->FindModel("error");
+			} catch (ModelCache::ModelNotFoundException) {
+				Error("Could not find placeholder model");
+			}
 		}
 	}
 
@@ -241,7 +248,6 @@ std::string Pi::GetSaveDir()
 
 void Pi::Init()
 {
-
 	OS::NotifyLoadBegin();
 
 	FileSystem::Init();
@@ -321,6 +327,7 @@ void Pi::Init()
 
 	Pi::scrAspect = videoSettings.width / float(videoSettings.height);
 
+	Pi::rng.IncRefCount(); // so nothing tries to free it
 	Pi::rng.seed(time(0));
 
 	InitJoysticks();
@@ -330,6 +337,13 @@ void Pi::Init()
 	navTunnelDisplayed = (config->Int("DisplayNavTunnel")) ? true : false;
 
 	EnumStrings::Init();
+
+	// get threads up
+	uint32_t numThreads = config->Int("WorkerThreads");
+	uint32_t numCores = getNumCores();
+	if (numThreads == 0) numThreads = std::max(numCores-1,1U);
+	jobQueue.Reset(new JobQueue(numThreads));
+	printf("started %d worker threads\n", numThreads);
 
 	// XXX early, Lua init needs it
 	ShipType::Init();
@@ -376,6 +390,7 @@ void Pi::Init()
 	SpaceStation::Init();
 	draw_progress(0.9f);
 
+	NavLights::Init(Pi::renderer);
 	Sfx::Init(Pi::renderer);
 	draw_progress(0.95f);
 
@@ -436,7 +451,7 @@ void Pi::Init()
 	vector3d vel4 = c2->GetVelocityRelTo(c1);
 	double speed4 = c2->GetVelocityRelTo(c1).Length();
 
-	
+
 	root->UpdateOrbitRails(0, 1.0);
 
 	//buildrotate test
@@ -465,27 +480,29 @@ void Pi::Init()
 	FILE *pStatFile = fopen("shipstat.csv","wt");
 	if (pStatFile)
 	{
-		fprintf(pStatFile, "name,lmrname,hullmass,capacity,fakevol,rescale,xsize,ysize,zsize,facc,racc,uacc,sacc,aacc,exvel\n");
+		fprintf(pStatFile, "name,modelname,hullmass,capacity,fakevol,rescale,xsize,ysize,zsize,facc,racc,uacc,sacc,aacc,exvel\n");
 		for (std::map<std::string, ShipType>::iterator i = ShipType::types.begin();
 				i != ShipType::types.end(); ++i)
 		{
-			ShipType *shipdef = &(i->second);
-			LmrModel *lmrModel = LmrLookupModelByName(shipdef->lmrModelName.c_str());
-			LmrObjParams lmrParams; memset(&lmrParams, 0, sizeof(LmrObjParams));
-			lmrParams.animationNamespace = "ShipAnimation";
-			EquipSet equip; equip.InitSlotSizes(shipdef->id);
-			lmrParams.equipment = &equip;
-			LmrCollMesh *collMesh = new LmrCollMesh(lmrModel, &lmrParams);
-			Aabb aabb = collMesh->GetAabb();
+			const ShipType *shipdef = &(i->second);
+			SceneGraph::Model *model = Pi::FindModel(shipdef->modelName, false);
 
 			double hullmass = shipdef->hullMass;
 			double capacity = shipdef->capacity;
-			double xsize = aabb.max.x-aabb.min.x;
-			double ysize = aabb.max.y-aabb.min.y;
-			double zsize = aabb.max.z-aabb.min.z;
-			double fakevol = xsize*ysize*zsize;
-			double rescale = pow(fakevol/(100 * (hullmass+capacity)), 0.3333333333);
-			double brad = aabb.GetRadius();
+
+			double xsize = 0.0, ysize = 0.0, zsize = 0.0, fakevol = 0.0, rescale = 0.0, brad = 0.0;
+			if (model) {
+				ScopedPtr<SceneGraph::Model> inst(model->MakeInstance());
+				model->CreateCollisionMesh();
+				Aabb aabb = model->GetCollisionMesh()->GetAabb();
+				xsize = aabb.max.x-aabb.min.x;
+				ysize = aabb.max.y-aabb.min.y;
+				zsize = aabb.max.z-aabb.min.z;
+				fakevol = xsize*ysize*zsize;
+				brad = aabb.GetRadius();
+				rescale = pow(fakevol/(100 * (hullmass+capacity)), 0.3333333333);
+			}
+
 			double simass = (hullmass + capacity) * 1000.0;
 			double angInertia = (2/5.0)*simass*brad*brad;
 			double acc1 = shipdef->linThrust[ShipType::THRUSTER_FORWARD] / (9.81*simass);
@@ -493,13 +510,11 @@ void Pi::Init()
 			double acc3 = shipdef->linThrust[ShipType::THRUSTER_UP] / (9.81*simass);
 			double acc4 = shipdef->linThrust[ShipType::THRUSTER_RIGHT] / (9.81*simass);
 			double acca = shipdef->angThrust/angInertia;
-			double exvel = shipdef->linThrust[ShipType::THRUSTER_FORWARD] /
-				(shipdef->fuelTankMass * shipdef->thrusterFuelUse * 10 * 1e6);
+			double exvel = shipdef->effectiveExhaustVelocity;
 
 			fprintf(pStatFile, "%s,%s,%.1f,%.1f,%.1f,%.3f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%f,%.1f\n",
-				shipdef->name.c_str(), shipdef->lmrModelName.c_str(), hullmass, capacity,
+				shipdef->name.c_str(), shipdef->modelName.c_str(), hullmass, capacity,
 				fakevol, rescale, xsize, ysize, zsize, acc1, acc2, acc3, acc4, acca, exvel);
-			delete collMesh;
 		}
 		fclose(pStatFile);
 	}
@@ -540,6 +555,7 @@ void Pi::Quit()
 	delete Pi::intro;
 	delete Pi::gameMenuView;
 	delete Pi::luaConsole;
+	NavLights::Uninit();
 	Sfx::Uninit();
 	Sound::Uninit();
 	SpaceStation::Uninit();
@@ -558,6 +574,7 @@ void Pi::Quit()
 	StarSystem::ShrinkCache();
 	SDL_Quit();
 	FileSystem::Uninit();
+	jobQueue.Reset();
 	exit(0);
 }
 
@@ -760,7 +777,7 @@ void Pi::HandleEvents()
 		//		SDL_GetRelativeMouseState(&Pi::mouseMotion[0], &Pi::mouseMotion[1]);
 				break;
 			case SDL_JOYAXISMOTION:
-				if (joysticks[event.jaxis.which].joystick == NULL)
+				if (!joysticks[event.jaxis.which].joystick)
 					break;
 				if (event.jaxis.value == -32768)
 					joysticks[event.jaxis.which].axes[event.jaxis.axis] = 1.f;
@@ -769,12 +786,12 @@ void Pi::HandleEvents()
 				break;
 			case SDL_JOYBUTTONUP:
 			case SDL_JOYBUTTONDOWN:
-				if (joysticks[event.jaxis.which].joystick == NULL)
+				if (!joysticks[event.jaxis.which].joystick)
 					break;
 				joysticks[event.jbutton.which].buttons[event.jbutton.button] = event.jbutton.state != 0;
 				break;
 			case SDL_JOYHATMOTION:
-				if (joysticks[event.jaxis.which].joystick == NULL)
+				if (!joysticks[event.jaxis.which].joystick)
 					break;
 				joysticks[event.jhat.which].hats[event.jhat.hat] = event.jhat.value;
 				break;
@@ -974,7 +991,7 @@ void Pi::MainLoop()
 			int pstate = Pi::game->GetPlayer()->GetFlightState();
 			if (pstate == Ship::DOCKED || pstate == Ship::DOCKING) Pi::gameTickAlpha = 1.0;
 			else Pi::gameTickAlpha = accumulator / step;
-			
+
 #if WITH_DEVKEYS
 			phys_stat += phys_ticks;
 #endif
@@ -1051,6 +1068,8 @@ void Pi::MainLoop()
 		}
 		cpan->Update();
 		musicPlayer.Update();
+
+		jobQueue->FinishJobs();
 
 #if WITH_DEVKEYS
 		if (Pi::showDebugInfo && SDL_GetTicks() - last_stats > 1000) {
@@ -1149,7 +1168,7 @@ void Pi::InitJoysticks() {
 		state = &joysticks.back();
 
 		state->joystick = SDL_JoystickOpen(n);
-		if (state->joystick == NULL) {
+		if (!state->joystick) {
 			fprintf(stderr, "SDL_JoystickOpen(%i): %s\n", n, SDL_GetError());
 			continue;
 		}

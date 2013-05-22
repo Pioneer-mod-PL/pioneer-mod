@@ -89,7 +89,7 @@ Space::Space(Game *game, const SystemPath &path)
 	m_rootFrame.Reset(new Frame(0, Lang::SYSTEM));
 	m_rootFrame->SetRadius(FLT_MAX);
 
-	GenBody(m_starSystem->rootBody, m_rootFrame.Get());
+	GenBody(m_starSystem->rootBody.Get(), m_rootFrame.Get());
 	m_rootFrame->UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
 
 	//DebugDumpFrames();
@@ -249,7 +249,7 @@ void Space::RebuildSystemBodyIndex()
 	m_sbodyIndex.push_back(0);
 
 	if (m_starSystem)
-		AddSystemBodyToIndex(m_starSystem->rootBody);
+		AddSystemBodyToIndex(m_starSystem->rootBody.Get());
 
 	m_sbodyIndexValid = true;
 }
@@ -371,7 +371,7 @@ static void RelocateStarportIfUnderwaterOrBuried(SystemBody *sbody, Frame *frame
 	const double radius = planet->GetSystemBody()->GetRadius();
 
 	// suggested position
-	rot = sbody->orbit.rotMatrix;
+	rot = sbody->orbit.GetPlane();
 	pos = rot * vector3d(0,1,0);
 
 	// Check if height varies too much around the starport center
@@ -406,7 +406,7 @@ static void RelocateStarportIfUnderwaterOrBuried(SystemBody *sbody, Frame *frame
 	bool isInitiallyUnderwater = false;
 	bool initialVariationTooHigh = false;
 
-	MTRand r(sbody->seed);
+	Random r(sbody->seed);
 
 	for (int tries = 0; tries < 200; tries++) {
 		variationWithinLimits = true;
@@ -567,14 +567,14 @@ static Frame *MakeFrameFor(SystemBody *sbody, Body *b, Frame *f)
 		vector3d pos;
 		Planet *planet = static_cast<Planet*>(rotFrame->GetBody());
 		RelocateStarportIfUnderwaterOrBuried(sbody, rotFrame, planet, pos, rot);
-		sbody->orbit.rotMatrix = rot;
+		sbody->orbit.SetPlane(rot);
 		b->SetPosition(pos * planet->GetTerrainHeight(pos));
 		b->SetOrient(rot);
 		return rotFrame;
 	} else {
 		assert(0);
 	}
-	return NULL;
+	return 0;
 }
 
 void Space::GenBody(SystemBody *sbody, Frame *f)
@@ -725,7 +725,7 @@ static void CollideWithTerrain(Body *body)
 
 	double terrHeight = terrain->GetTerrainHeight(body->GetPosition().Normalized());
 	if (altitude >= terrHeight) return;
-	
+
 	CollisionContact c;
 	c.pos = body->GetPosition();
 	c.normal = c.pos.Normalized();

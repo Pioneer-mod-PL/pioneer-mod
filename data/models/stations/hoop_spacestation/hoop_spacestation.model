@@ -1,8 +1,32 @@
-material default
-tex_diff hoop_diff.png
-specular 1.0 1.0 1.0
+material hoopHull-material
+tex_diff hull.png
+tex_spec hull_spec.png
+specular 0.7 0.7 0.7
 diffuse 1.0 1.0 1.0
+shininess 15
 
-mesh hoop_spacestation.dae
+material hoopHullLit-material
+tex_diff hull.png
+tex_spec hull_spec.png
+specular 0.5 0.5 0.5
+diffuse 0.7 0.7 0.7
+shininess 15
+unlit
 
-collision hoop_collide.dae
+material hoopDecal-material
+tex_diff decal.png
+tex_spec decal_spec.png
+specular 0.7 0.7 0.7
+diffuse 1.0 1.0 1.0
+shininess 5
+
+mesh connections.dae
+mesh mainhoop.dae
+mesh doors.dae
+mesh hoop_docking.dae
+mesh dockingbay.dae
+mesh dockingpads.dae
+
+collision collision.obj
+
+anim doors 1 121

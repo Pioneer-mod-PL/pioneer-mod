@@ -518,14 +518,14 @@ Y
     Y
 Z
     Z
-AXIS
-     " Axe"
 WEAPONS
     Armes
 TARGET_OBJECT_IN_SIGHTS
     Cible l'objet visé
 FIRE_LASER
     Utilise laser
+FIRE_MISSILE
+    Tire un missile
 SHIP_ORIENTATION
     Orientation du vaisseau
 FAST_ROTATION_CONTROL

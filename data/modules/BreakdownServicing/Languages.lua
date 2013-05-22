@@ -183,7 +183,9 @@ Translate:Add({ Polski = {
 	["Your drive was last serviced on {date} by {company}"] = "Ostatni przegląd wykonany {date} przez {company}",
 	["Your drive has not been serviced since it was installed on {date}"] = "Twój napęd nie przechodził przeglądu od czasu instalacji - dnia {date}",
 	["You do not have a drive to service!"] = "Nie posiadasz hipernapędu!",
-	["The ship's hyperdrive has been destroyed by a malfunction"] = "Awaria, napęd nadprzestrzenny zniszczony.",
+	["The ship's hyperdrive has been destroyed by a malfunction"] = "Napęd nadprzestrzenny statku uległ zniszczeniu w wyniku awarii.",
+	["You fixed the hyperdrive before it broke down."] = "Naprawiasz napęd nadprzestrzenny zapobiegając awarii.",
+	["I fixed the hyperdrive before it broke down."] = "Naprawiam napęd nadprzestrzenny zapobiegając awarii.",
 }, })
 
 ---- DUTCH / NEDERLANDS ----
@@ -526,6 +528,8 @@ Translate:Add({ Russian = {
 	["Your drive has not been serviced since it was installed on {date}"] = "Ваш двигатель ещё не обслуживался, т.к. его эксплуатация началась только в {date} года.",
 	["You do not have a drive to service!"] = "У вас нет двигателя для сервиса!",
 	["The ship's hyperdrive has been destroyed by a malfunction"] = "Гипердвигатель вашего корабля полностью разрушен.",
+        ["You fixed the hyperdrive before it broke down."] = "Вы отремонтировали гипердвигатель прежде, чем он сломался.",
+	["I fixed the hyperdrive before it broke down."] = "Я отремонтировал гипердвигатель прежде, чем он сломался.",
 }, })
 
 ---- GERMAN / DEUTSCH ----
@@ -612,4 +616,91 @@ Translate:Add({ Deutsch = {
 	["Your drive has not been serviced since it was installed on {date}"] = "Der Antrieb wurde noch nicht überholt, da er erst am {date} eingebaut wurde.",
 	["You do not have a drive to service!"] = "Es ist kein Antrieb vorhanden, der überholt werden könnte!",
 	["The ship's hyperdrive has been destroyed by a malfunction"] = "Der Hyperraumantrieb des Schiffes wurde durch eine Fehlfunktion zerstört",
+}, })
+
+---- CZECH / ČESKY ----
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "{name} servis motorů s.r.o.",
+	intro = [[Vyhněte se problémům s pokaženým hypermotorem.  Dejte ten svůj k údržbě ještě dnes, k oficiálně schválené firmě {name} servis hypermotorů s.r.o.
+
+Motor: {drive}
+Servis: {price}
+Záruka: 18 months
+{lasttime}]],
+	yesplease = "Provést údržbu hypermotoru",
+	response = "Údržba hypermotoru byla dokončena.",
+	strength = 1.5,
+	baseprice = 6,
+})
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "{proprietor}: Specialista na údržbu hypermotorů",
+	intro = [[Jsem {proprietor}.  Můžu provést údržbu tvého {drive} minimálně s roční zárukou bezporuchového provozu.  Cena této služby bude {price}
+{lasttime}]],
+	yesplease = "Proveď údržbu hypermotoru",
+	response = "Údržba hypermotoru byla dokončena.",
+	strength = 1.2, -- At least a year... hidden bonus!
+	baseprice = 4,
+})
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "{proprietor} & spol. HyperMechanici",
+	intro = [[Vítejte.  My ve firmě {proprietor} & spol. si stojíme za naší prací svým dobrým jménem.
+
+{lasttime}
+Můžeme vytunit váš {drive} a zaručit tak roční bezproblémový provoz za cenu {price}.  Na práci budu dohlížet já osobně, aby byla zaručena vaše spokojenost a prvotřídní kvalita.]],
+	yesplease = "Prosím vytuňte můj hypermotor za navrhovanou cenu",
+	response = "Údržba dokončena.  Děkujeme za objednávku.",
+	strength = 1.0,
+	baseprice = 3,
+})
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "SuperFix údržba (pobočka {name})",
+	intro = [[Vítejte u firmy SuperFix údržba.
+
+{lasttime}
+Nastal čas pololetní údržby? Nechejte svůj hypermotor SuperFixovat!
+Můžeme vytunit váš {drive} za pouhých {price}.  Levnější firmu nenajdete!]],
+	yesplease = "SuperFixujte mě!",
+	response = "Vaše SuperFix údržba je hotova, i se SuperFix zárukou!",
+	strength = 0.5,
+	baseprice = 2,
+})
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "ČasoProstor Motory, spol. s r.o.",
+	intro = [[Vitejte ve firmě ČasoProstor.
+
+Specializujeme se na mezihvězdné motory. Veškeré údržbářské práce mají záruku 2 roky.
+{lasttime}
+Údržba vašeho {drive} bude stát {price}.  Chcete ji provést?]],
+	yesplease = "Ano, proveďte údržbu",
+	response = "Práce na vašem hypermotoru byly dokončeny.",
+	strength = 2.1, -- these guys are good.
+	baseprice = 10,
+})
+
+Translate:AddFlavour('Czech','BreakdownServicing', {
+	title = "{name} servis motorů s.r.o.",
+	intro = [[Vyhněte se problémům s pokaženým hypermotorem.  Dejte ten svůj k údržbě ještě dnes.
+
+Motor: {drive}
+Servis: {price}
+{lasttime}]],
+	yesplease = "Provést údržbu hypermotoru",
+	response = "Údržba hypermotoru byla dokončena.",
+	strength = 0.0, -- These guys just reset the jump count.  Shoddy.
+	baseprice = 1.8,
+})
+
+Translate:Add({ Czech = {
+	["I don't have enough money"] = "Nemám dostatek peněz",
+	["Your drive was last serviced on {date} by {company}"] = "Váš motor byl v servisu naposled {date} u firmy {company}",
+	["Your drive has not been serviced since it was installed on {date}"] = "Váš motor ještě nebyl v servisu, od té doby co byl {date} namontován",
+	["You do not have a drive to service!"] = "Není dostupný žádný motor, na kterém by šla provést údržba!",
+	["The ship's hyperdrive has been destroyed by a malfunction"] = "Lodní hypermotor byl zničen z důvodu funkční poruchy",
+	["You fixed the hyperdrive before it broke down."] = "Opravil(a) jste hypermotor těsně před jeho selháním.",
+	["I fixed the hyperdrive before it broke down."] = "Opravil(a) jsem hypermotor těsně před jeho selháním.",
 }, })

@@ -62,6 +62,7 @@ void SerializableEquipSet::Load(Serializer::Reader &rd)
 void Ship::Save(Serializer::Writer &wr, Space *space)
 {
 	DynamicBody::Save(wr, space);
+	m_skin.Save(wr);
 	wr.Vector3d(m_angThrusters);
 	wr.Vector3d(m_thrusters);
 	wr.Int32(m_wheelTransition);
@@ -82,7 +83,7 @@ void Ship::Save(Serializer::Writer &wr, Space *space)
 		wr.Float(m_gunTemperature[i]);
 	}
 	wr.Float(m_ecmRecharge);
-	m_shipFlavour.Save(wr);
+	wr.String(m_type->id);
 	wr.Int32(m_dockedWithPort);
 	wr.Int32(space->GetIndexForBody(m_dockedWith));
 	m_equipment.Save(wr);
@@ -96,11 +97,15 @@ void Ship::Save(Serializer::Writer &wr, Space *space)
 
 	wr.Int32(static_cast<int>(m_controller->GetType()));
 	m_controller->Save(wr, space);
+
+	m_navLights->Save(wr);
 }
 
 void Ship::Load(Serializer::Reader &rd, Space *space)
 {
 	DynamicBody::Load(rd, space);
+	m_skin.Load(rd);
+	m_skin.Apply(GetModel());
 	// needs fixups
 	m_angThrusters = rd.Vector3d();
 	m_thrusters = rd.Vector3d();
@@ -108,8 +113,10 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	m_wheelState = rd.Float();
 	m_launchLockTimeout = rd.Float();
 	m_testLanded = rd.Bool();
-	m_flightState = FlightState(rd.Int32());
-	m_alertState = AlertState(rd.Int32());
+	m_flightState = static_cast<FlightState>(rd.Int32());
+	m_alertState = static_cast<AlertState>(rd.Int32());
+	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
+	Properties().Set("alertStatus", EnumStrings::GetString("ShipAlertStatus", m_alertState));
 	m_lastFiringAlert = rd.Double();
 
 	m_hyperspace.dest = SystemPath::Unserialize(rd);
@@ -121,11 +128,10 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 		m_gunTemperature[i] = rd.Float();
 	}
 	m_ecmRecharge = rd.Float();
-	m_shipFlavour.Load(rd);
-	m_type = &ShipType::types[m_shipFlavour.id];
+	SetShipId(rd.String()); // XXX handle missing thirdparty ship
 	m_dockedWithPort = rd.Int32();
 	m_dockedWithIndex = rd.Int32();
-	m_equipment.InitSlotSizes(m_shipFlavour.id);
+	m_equipment.InitSlotSizes(m_type->id);
 	m_equipment.Load(rd);
 	Init();
 	m_stats.hull_mass_left = rd.Float(); // must be after Init()...
@@ -134,7 +140,7 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	else m_curAICmd = 0;
 	m_aiMessage = AIError(rd.Int32());
 	SetFuel(rd.Double());
-	m_stats.fuel_tank_mass_left = GetShipType().fuelTankMass * GetFuel();
+	m_stats.fuel_tank_mass_left = GetShipType()->fuelTankMass * GetFuel();
 	m_reserveFuel = rd.Double();
 	UpdateStats(); // this is necessary, UpdateStats() in Ship::Init has wrong values of m_thrusterFuel after Load
 
@@ -146,18 +152,19 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 		SetController(new ShipController());
 	m_controller->Load(rd);
 
+	m_navLights->Load(rd);
+
 	m_equipment.onChange.connect(sigc::mem_fun(this, &Ship::OnEquipmentChange));
 }
 
 void Ship::Init()
 {
-	const ShipType &stype = GetShipType();
-
-	SetModel(stype.modelName.c_str());
+	m_navLights.Reset(new NavLights(GetModel()));
+	m_navLights->SetEnabled(true);
 
 	SetMassDistributionFromModel();
 	UpdateStats();
-	m_stats.hull_mass_left = float(stype.hullMass);
+	m_stats.hull_mass_left = float(m_type->hullMass);
 	m_stats.shield_mass_left = 0;
 	m_hyperspace.now = false;			// TODO: move this on next savegame change, maybe
 	m_hyperspaceCloud = 0;
@@ -180,6 +187,9 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 {
 	m_flightState = FLYING;
 	m_alertState = ALERT_NONE;
+	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
+	Properties().Set("alertStatus", EnumStrings::GetString("ShipAlertStatus", m_alertState));
+
 	m_lastFiringAlert = 0.0;
 	m_testLanded = false;
 	m_launchLockTimeout = 0;
@@ -187,8 +197,7 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 	m_wheelState = 0;
 	m_dockedWith = 0;
 	m_dockedWithPort = 0;
-	m_shipFlavour = ShipFlavour(shipId);
-	m_type = &ShipType::types[m_shipFlavour.id];
+	SetShipId(shipId);
 	m_thrusters.x = m_thrusters.y = m_thrusters.z = 0;
 	m_angThrusters.x = m_angThrusters.y = m_angThrusters.z = 0;
 	m_equipment.InitSlotSizes(shipId);
@@ -200,11 +209,16 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 		m_gunTemperature[i] = 0;
 	}
 	m_ecmRecharge = 0;
-	SetLabel(m_shipFlavour.regid);
 	m_curAICmd = 0;
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
 	m_equipment.onChange.connect(sigc::mem_fun(this, &Ship::OnEquipmentChange));
+
+	SetModel(m_type->modelName.c_str());
+	SetLabel(MakeRandomLabel());
+	m_skin.SetRandomColors(Pi::rng);
+	m_skin.SetPattern(Pi::rng.Int32(0, GetModel()->GetNumPatterns()));
+	m_skin.Apply(GetModel());
 
 	Init();
 	SetController(new ShipController());
@@ -227,8 +241,7 @@ void Ship::SetController(ShipController *c)
 
 float Ship::GetPercentHull() const
 {
-	const ShipType &stype = GetShipType();
-	return 100.0f * (m_stats.hull_mass_left / float(stype.hullMass));
+	return 100.0f * (m_stats.hull_mass_left / float(m_type->hullMass));
 }
 
 float Ship::GetPercentShields() const
@@ -239,26 +252,31 @@ float Ship::GetPercentShields() const
 
 void Ship::SetPercentHull(float p)
 {
-	const ShipType &stype = GetShipType();
-	m_stats.hull_mass_left = 0.01f * Clamp(p, 0.0f, 100.0f) * float(stype.hullMass);
+	m_stats.hull_mass_left = 0.01f * Clamp(p, 0.0f, 100.0f) * float(m_type->hullMass);
 }
 
 void Ship::UpdateMass()
 {
-	SetMass((m_stats.total_mass + GetFuel()*GetShipType().fuelTankMass)*1000);
+	SetMass((m_stats.total_mass + GetFuel()*GetShipType()->fuelTankMass)*1000);
+}
+
+void Ship::SetFuel(const double f)
+{
+	m_thrusterFuel = Clamp(f, 0.0, 1.0);
+	Properties().Set("fuel", m_thrusterFuel*100); // XXX to match SetFuelPercent
 }
 
 double Ship::GetFuelUseRate() const {
-	const double denominator = GetShipType().fuelTankMass * GetShipType().effectiveExhaustVelocity * 10;
-	return denominator > 0 ? -GetShipType().linThrust[ShipType::THRUSTER_FORWARD]/denominator : 1e9;
+	const double denominator = GetShipType()->fuelTankMass * GetShipType()->effectiveExhaustVelocity * 10;
+	return denominator > 0 ? -GetShipType()->linThrust[ShipType::THRUSTER_FORWARD]/denominator : 1e9;
 }
 
 // returns speed that can be reached using fuel minus reserve according to the Tsiolkovsky equation
 double Ship::GetSpeedReachedWithFuel() const
 {
-	const double fuelmass = 1000*GetShipType().fuelTankMass * (m_thrusterFuel - m_reserveFuel);
+	const double fuelmass = 1000*GetShipType()->fuelTankMass * (m_thrusterFuel - m_reserveFuel);
 	if (fuelmass < 0) return 0.0;
-	return GetShipType().effectiveExhaustVelocity * log(GetMass()/(GetMass()-fuelmass));
+	return GetShipType()->effectiveExhaustVelocity * log(GetMass()/(GetMass()-fuelmass));
 }
 
 bool Ship::OnDamage(Object *attacker, float kgDamage)
@@ -295,7 +313,7 @@ bool Ship::OnDamage(Object *attacker, float kgDamage)
 			if (Pi::rng.Double() < kgDamage)
 				Sfx::Add(this, Sfx::TYPE_DAMAGE);
 
-			if (dam < 0.01 * float(GetShipType().hullMass))
+			if (dam < 0.01 * float(GetShipType()->hullMass))
 				Sound::BodyMakeNoise(this, "Hull_hit_Small", 1.0f);
 			else
 				Sound::BodyMakeNoise(this, "Hull_Hit_Medium", 1.0f);
@@ -382,23 +400,21 @@ void Ship::SetAngThrusterState(const vector3d &levels)
 
 vector3d Ship::GetMaxThrust(const vector3d &dir) const
 {
-	const ShipType &stype = GetShipType();
 	vector3d maxThrust;
-	maxThrust.x = (dir.x > 0) ? stype.linThrust[ShipType::THRUSTER_RIGHT]
-		: -stype.linThrust[ShipType::THRUSTER_LEFT];
-	maxThrust.y = (dir.y > 0) ? stype.linThrust[ShipType::THRUSTER_UP]
-		: -stype.linThrust[ShipType::THRUSTER_DOWN];
-	maxThrust.z = (dir.z > 0) ? stype.linThrust[ShipType::THRUSTER_REVERSE]
-		: -stype.linThrust[ShipType::THRUSTER_FORWARD];
+	maxThrust.x = (dir.x > 0) ? m_type->linThrust[ShipType::THRUSTER_RIGHT]
+		: -m_type->linThrust[ShipType::THRUSTER_LEFT];
+	maxThrust.y = (dir.y > 0) ? m_type->linThrust[ShipType::THRUSTER_UP]
+		: -m_type->linThrust[ShipType::THRUSTER_DOWN];
+	maxThrust.z = (dir.z > 0) ? m_type->linThrust[ShipType::THRUSTER_REVERSE]
+		: -m_type->linThrust[ShipType::THRUSTER_FORWARD];
 	return maxThrust;
 }
 
 double Ship::GetAccelMin() const
 {
-	const ShipType &stype = GetShipType();
-	float val = stype.linThrust[ShipType::THRUSTER_UP];
-	val = std::min(val, stype.linThrust[ShipType::THRUSTER_RIGHT]);
-	val = std::min(val, -stype.linThrust[ShipType::THRUSTER_LEFT]);
+	float val = m_type->linThrust[ShipType::THRUSTER_UP];
+	val = std::min(val, m_type->linThrust[ShipType::THRUSTER_RIGHT]);
+	val = std::min(val, -m_type->linThrust[ShipType::THRUSTER_LEFT]);
 	return val / GetMass();
 }
 
@@ -416,21 +432,19 @@ Equip::Type Ship::GetHyperdriveFuelType() const
 
 void Ship::UpdateEquipStats()
 {
-	const ShipType &stype = GetShipType();
-
-	m_stats.max_capacity = stype.capacity;
+	m_stats.max_capacity = m_type->capacity;
 	m_stats.used_capacity = 0;
 	m_stats.used_cargo = 0;
 
 	for (int i=0; i<Equip::SLOT_MAX; i++) {
-		for (int j=0; j<stype.equipSlotCapacity[i]; j++) {
+		for (int j=0; j<m_type->equipSlotCapacity[i]; j++) {
 			Equip::Type t = m_equipment.Get(Equip::Slot(i), j);
 			if (t) m_stats.used_capacity += Equip::types[t].mass;
 			if (Equip::Slot(i) == Equip::SLOT_CARGO) m_stats.used_cargo += Equip::types[t].mass;
 		}
 	}
 	m_stats.free_capacity = m_stats.max_capacity - m_stats.used_capacity;
-	m_stats.total_mass = m_stats.used_capacity + stype.hullMass;
+	m_stats.total_mass = m_stats.used_capacity + m_type->hullMass;
 
 	m_stats.shield_mass = TONS_HULL_PER_SHIELD * float(m_equipment.Count(Equip::SLOT_SHIELD, Equip::SHIELD_GENERATOR));
 
@@ -439,7 +453,7 @@ void Ship::UpdateEquipStats()
 
 	Equip::Type fuelType = GetHyperdriveFuelType();
 
-	if (stype.equipSlotCapacity[Equip::SLOT_ENGINE]) {
+	if (m_type->equipSlotCapacity[Equip::SLOT_ENGINE]) {
 		Equip::Type t = m_equipment.Get(Equip::SLOT_ENGINE);
 		int hyperclass = Equip::types[t].pval;
 		if (!hyperclass) { // no drive
@@ -455,9 +469,7 @@ void Ship::UpdateEquipStats()
 
 void Ship::UpdateFuelStats()
 {
-	const ShipType &stype = GetShipType();
-
-	m_stats.fuel_tank_mass = stype.fuelTankMass;
+	m_stats.fuel_tank_mass = m_type->fuelTankMass;
 	m_stats.fuel_use = GetFuelUseRate();
 	m_stats.fuel_tank_mass_left = m_stats.fuel_tank_mass * GetFuel();
 
@@ -605,10 +617,10 @@ Missile * Ship::SpawnMissile(ShipType::Id missile_type, int power) {
 	Missile *missile = new Missile(missile_type, this, power);
 	missile->SetOrient(GetOrient());
 	missile->SetFrame(GetFrame());
-	// XXX DODGY! need to put it in a sensible location
-	vector3d dir = -GetOrient().VectorZ();
-	missile->SetPosition(GetPosition()+50.0*dir);
-	missile->SetVelocity(GetVelocity());
+	const vector3d pos = GetOrient() * vector3d(0, GetAabb().min.y - 10, GetAabb().min.z);
+	const vector3d vel = -40.0 * GetOrient().VectorZ();
+	missile->SetPosition(GetPosition()+pos);
+	missile->SetVelocity(GetVelocity()+vel);
 	Pi::game->GetSpace()->AddBody(missile);
 	return missile;
 }
@@ -628,6 +640,8 @@ void Ship::SetFlightState(Ship::FlightState newState)
 	}
 
 	m_flightState = newState;
+	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
+
 	switch (m_flightState)
 	{
 		case FLYING: SetMoving(true); SetColliding(true); SetStatic(false); break;
@@ -696,12 +710,15 @@ void Ship::TimeStepUpdate(const float timeStep)
 	vector3d thrust = vector3d(maxThrust.x*m_thrusters.x, maxThrust.y*m_thrusters.y,
 		maxThrust.z*m_thrusters.z);
 	AddRelForce(thrust);
-	AddRelTorque(GetShipType().angThrust * m_angThrusters);
+	AddRelTorque(GetShipType()->angThrust * m_angThrusters);
 
 	DynamicBody::TimeStepUpdate(timeStep);
 
 	// fuel use decreases mass, so do this as the last thing in the frame
 	UpdateFuel(timeStep, thrust);
+
+	m_navLights->SetEnabled(m_wheelState > 0.01f);
+	m_navLights->Update(timeStep);
 
 	if (m_landingGearAnimation)
 		static_cast<SceneGraph::Model*>(GetModel())->UpdateAnimations();
@@ -758,12 +775,11 @@ void Ship::TimeAccelAdjust(const float timeStep)
 
 void Ship::FireWeapon(int num)
 {
-	const ShipType &stype = GetShipType();
 	if (m_flightState != FLYING) return;
 
 	const matrix3x3d &m = GetOrient();
-	const vector3d dir = m * vector3d(stype.gunMount[num].dir);
-	const vector3d pos = m * vector3d(stype.gunMount[num].pos) + GetPosition();
+	const vector3d dir = m * vector3d(m_type->gunMount[num].dir);
+	const vector3d pos = m * vector3d(m_type->gunMount[num].pos) + GetPosition();
 
 	m_gunTemperature[num] += 0.01f;
 
@@ -775,10 +791,10 @@ void Ship::FireWeapon(int num)
 
 	if (lt.flags & Equip::LASER_DUAL)
 	{
-		const ShipType::DualLaserOrientation orient = stype.gunMount[num].orient;
+		const ShipType::DualLaserOrientation orient = m_type->gunMount[num].orient;
 		const vector3d orient_norm =
 				(orient == ShipType::DUAL_LASERS_VERTICAL) ? m.VectorX() : m.VectorY();
-		const vector3d sep = stype.gunMount[num].sep * dir.Cross(orient_norm).NormalizedSafe();
+		const vector3d sep = m_type->gunMount[num].sep * dir.Cross(orient_norm).NormalizedSafe();
 
 		Projectile::Add(this, t, pos + sep, baseVel, dirVel);
 		Projectile::Add(this, t, pos - sep, baseVel, dirVel);
@@ -810,6 +826,12 @@ double Ship::GetHullTemperature() const
 	}
 }
 
+void Ship::SetAlertState(AlertState as)
+{
+	m_alertState = as;
+	Properties().Set("alertStatus", EnumStrings::GetString("ShipAlertStatus", as));
+}
+
 void Ship::UpdateAlertState()
 {
 	// no alerts if no scanner
@@ -835,7 +857,7 @@ void Ship::UpdateAlertState()
 
 		const Ship *ship = static_cast<const Ship*>(*i);
 
-		if (ship->GetShipType().tag == ShipType::TAG_STATIC_SHIP) continue;
+		if (ship->GetShipType()->tag == ShipType::TAG_STATIC_SHIP) continue;
 		if (ship->GetFlightState() == LANDED || ship->GetFlightState() == DOCKED) continue;
 
 		if (GetPositionRelTo(ship).LengthSqr() < ALERT_DISTANCE*ALERT_DISTANCE) {
@@ -901,7 +923,7 @@ void Ship::UpdateFuel(const float timeStep, const vector3d &thrust)
 {
 	const double fuelUseRate = GetFuelUseRate() * 0.01;
 	double totalThrust = (fabs(thrust.x) + fabs(thrust.y) + fabs(thrust.z))
-		/ -GetShipType().linThrust[ShipType::THRUSTER_FORWARD];
+		/ -GetShipType()->linThrust[ShipType::THRUSTER_FORWARD];
 
 	FuelState lastState = GetFuelState();
 	SetFuel(GetFuel() - timeStep * (totalThrust * fuelUseRate));
@@ -1019,10 +1041,8 @@ void Ship::StaticUpdate(const float timeStep)
 
 	if (m_testLanded) TestLanded();
 
-	if (m_equipment.Get(Equip::SLOT_HULLAUTOREPAIR) == Equip::HULL_AUTOREPAIR) {
-		const ShipType &stype = GetShipType();
-		m_stats.hull_mass_left = std::min(m_stats.hull_mass_left + 0.1f*timeStep, float(stype.hullMass));
-	}
+	if (m_equipment.Get(Equip::SLOT_HULLAUTOREPAIR) == Equip::HULL_AUTOREPAIR)
+		m_stats.hull_mass_left = std::min(m_stats.hull_mass_left + 0.1f*timeStep, float(m_type->hullMass));
 
 	// After calling StartHyperspaceTo this Ship must not spawn objects
 	// holding references to it (eg missiles), as StartHyperspaceTo
@@ -1039,6 +1059,12 @@ void Ship::StaticUpdate(const float timeStep)
 	if (m_hyperspace.now) {
 		m_hyperspace.now = false;
 		EnterHyperspace();
+	}
+
+	//Add smoke trails for missiles on thruster state
+	if (m_type->tag == ShipType::TAG_MISSILE && m_thrusters.z < 0.0 && 0.1*Pi::rng.Double() < timeStep) {
+		vector3d pos = GetOrient() * vector3d(0, 0 , 5);
+		Sfx::AddThrustSmoke(this, Sfx::TYPE_SMOKE, std::min(10.0*GetVelocity().Length()*abs(m_thrusters.z),100.0),pos);
 	}
 }
 
@@ -1078,15 +1104,15 @@ bool Ship::SetWheelState(bool down)
 {
 	if (m_flightState != FLYING) return false;
 	if (is_equal_exact(m_wheelState, down ? 1.0f : 0.0f)) return false;
-	m_wheelTransition = (down ? 1 : -1);
+	int newWheelTransition = (down ? 1 : -1);
+	if (newWheelTransition == m_wheelTransition) return false;
+	m_wheelTransition = newWheelTransition;
 	return true;
 }
 
 void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	if (IsDead()) return;
-
-	m_shipFlavour.ApplyTo(GetModel());
 
 	//angthrust negated, for some reason
 	GetModel()->SetThrust(vector3f(m_thrusters), -vector3f(m_angThrusters));
@@ -1095,7 +1121,7 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 		m_landingGearAnimation->SetProgress(m_wheelState);
 
 	//strncpy(params.pText[0], GetLabel().c_str(), sizeof(params.pText));
-	RenderModel(renderer, viewCoords, viewTransform);
+	RenderModel(renderer, camera, viewCoords, viewTransform);
 
 	// draw shield recharge bubble
 	if (m_stats.shield_mass_left < m_stats.shield_mass) {
@@ -1155,30 +1181,6 @@ void Ship::OnEquipmentChange(Equip::Type e)
 	LuaEvent::Queue("onShipEquipmentChanged", this, EnumStrings::GetString("EquipType", e));
 }
 
-void Ship::UpdateFlavour(const ShipFlavour *f)
-{
-	assert(f->id == m_shipFlavour.id);
-	m_shipFlavour = *f;
-	onFlavourChanged.emit();
-	LuaEvent::Queue("onShipFlavourChanged", this);
-}
-
-/*
- * Used when player buys a new ship.
- */
-void Ship::ResetFlavour(const ShipFlavour *f)
-{
-	m_shipFlavour = *f;
-	m_type = &ShipType::types[m_shipFlavour.id];
-	m_equipment.InitSlotSizes(f->id);
-	SetLabel(f->regid);
-	Init();
-	onFlavourChanged.emit();
-	if (IsType(Object::PLAYER))
-		Pi::worldView->SetCamType(Pi::worldView->GetCamType());
-	LuaEvent::Queue("onShipFlavourChanged", this);
-}
-
 void Ship::EnterHyperspace() {
 	assert(GetFlightState() != Ship::HYPERSPACE);
 
@@ -1233,4 +1235,49 @@ void Ship::EnterSystem() {
 
 void Ship::OnEnterSystem() {
 	m_hyperspaceCloud = 0;
+}
+
+std::string Ship::MakeRandomLabel()
+{
+	std::string regid = "XX-1111";
+	regid[0] = 'A' + Pi::rng.Int32(26);
+	regid[1] = 'A' + Pi::rng.Int32(26);
+	int code = Pi::rng.Int32(10000);
+	regid[3] = '0' + ((code / 1000) % 10);
+	regid[4] = '0' + ((code /  100) % 10);
+	regid[5] = '0' + ((code /   10) % 10);
+	regid[6] = '0' + ((code /    1) % 10);
+	return regid;
+}
+
+void Ship::SetShipId(const ShipType::Id &shipId)
+{
+	m_type = &ShipType::types[shipId];
+	Properties().Set("shipId", shipId);
+}
+
+void Ship::SetShipType(const ShipType::Id &shipId)
+{
+	SetShipId(shipId);
+	m_equipment.InitSlotSizes(shipId);
+	SetModel(m_type->modelName.c_str());
+	m_skin.Apply(GetModel());
+	Init();
+	onFlavourChanged.emit();
+	if (IsType(Object::PLAYER))
+		Pi::worldView->SetCamType(Pi::worldView->GetCamType());
+	LuaEvent::Queue("onShipTypeChanged", this);
+}
+
+void Ship::SetLabel(const std::string &label)
+{
+	DynamicBody::SetLabel(label);
+	m_skin.SetLabel(label);
+	m_skin.Apply(GetModel());
+}
+
+void Ship::SetSkin(const SceneGraph::ModelSkin &skin)
+{
+	m_skin = skin;
+	m_skin.Apply(GetModel());
 }

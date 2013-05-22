@@ -67,6 +67,7 @@
 #include "Pattern.h"
 #include "CollMesh.h"
 #include "graphics/Material.h"
+#include "Serializer.h"
 #include <stdexcept>
 
 namespace Graphics { class Renderer; }
@@ -88,7 +89,9 @@ public:
 	friend class Loader;
 	Model(Graphics::Renderer *r, const std::string &name);
 	~Model();
+
 	Model *MakeInstance() const;
+
 	float GetDrawClipRadius() const { return m_boundingRadius; }
 	void Render(const matrix4x4f &trans, RenderData *params = 0); //ModelNode can override RD
 	RefCountedPtr<CollMesh> CreateCollisionMesh();
@@ -97,34 +100,43 @@ public:
 	//materials used in the nodes should be accessible from here for convenience
 	RefCountedPtr<Graphics::Material> GetMaterialByName(const std::string &name) const;
 	RefCountedPtr<Graphics::Material> GetMaterialByIndex(int) const;
+	unsigned int GetNumMaterials() const { return m_materials.size(); }
 
-	int GetNumTags() const { return m_tags.size(); }
-	MatrixTransform * const GetTagByIndex(unsigned int index) const;
-	MatrixTransform * const FindTagByName(const std::string &name) const;
+	unsigned int GetNumTags() const { return m_tags.size(); }
+	MatrixTransform *const GetTagByIndex(unsigned int index) const;
+	MatrixTransform *const FindTagByName(const std::string &name) const;
+	typedef std::vector<MatrixTransform *> TVecMT;
+	void FindTagsByStartOfName(const std::string &name, TVecMT &outNameMTs) const;
 	void AddTag(const std::string &name, MatrixTransform *node);
 
 	const PatternContainer &GetPatterns() const { return m_patterns; }
+	unsigned int GetNumPatterns() const { return m_patterns.size(); }
 	void SetPattern(unsigned int index);
 	void SetColors(const std::vector<Color4ub> &colors);
 	void SetDecalTexture(Graphics::Texture *t, unsigned int index = 0);
-	void SetLabel(const std::string&);
+	void ClearDecal(unsigned int index = 0);
 	void ClearDecals();
+	void SetLabel(const std::string&);
 
 	//for modelviewer, at least
 	bool SupportsDecals();
 	bool SupportsPatterns();
 
-	Animation *FindAnimation(const std::string&); //0 if not found
+	Animation *FindAnimation(const std::string&) const; //0 if not found
 	const std::vector<Animation *> GetAnimations() const { return m_animations; }
 	void UpdateAnimations();
 
 	Graphics::Renderer *GetRenderer() const { return m_renderer; }
 
 	//special for ship model use
-	void SetThrust(const vector3f& linear, const vector3f &angular);
+	void SetThrust(const vector3f &linear, const vector3f &angular);
+
+	void Save(Serializer::Writer &wr) const;
+	void Load(Serializer::Reader &rd);
 
 private:
 	Model(const Model&);
+
 	static const unsigned int MAX_DECAL_MATERIALS = 4;
 	ColorMap m_colorMap;
 	float m_boundingRadius;

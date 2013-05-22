@@ -140,6 +140,7 @@ Model *Loader::LoadModel(const std::string &filename)
 Model *Loader::LoadModel(const std::string &shortname, const std::string &basepath)
 {
 	m_logMessages.clear();
+
 	FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
 	for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next())
 	{
@@ -375,14 +376,14 @@ RefCountedPtr<Node> Loader::LoadMesh(const std::string &filename, const AnimList
 
 	//turn all scene aiMeshes into Surfaces
 	//Index matches assimp index.
-	std::vector<RefCountedPtr<Graphics::Surface> > surfaces;
-	ConvertAiMeshesToSurfaces(surfaces, scene, m_model);
+	std::vector<RefCountedPtr<StaticGeometry> > geoms;
+	ConvertAiMeshes(geoms, scene);
 
 	// Recursive structure conversion. Matrix needs to be accumulated for
 	// special features that are absolute-positioned (thrusters)
 	RefCountedPtr<Node> meshRoot(new Group(m_renderer));
 
-	ConvertNodes(scene->mRootNode, static_cast<Group*>(meshRoot.Get()), surfaces, matrix4x4f::Identity());
+	ConvertNodes(scene->mRootNode, static_cast<Group*>(meshRoot.Get()), geoms, matrix4x4f::Identity());
 	ConvertAnimations(scene, animDefs, static_cast<Group*>(meshRoot.Get()));
 
 	return meshRoot;
@@ -462,17 +463,20 @@ void Loader::CheckAnimationConflicts(const Animation* anim, const std::vector<An
 	}
 }
 
-void Loader::ConvertAiMeshesToSurfaces(std::vector<RefCountedPtr<Graphics::Surface> > &surfaces, const aiScene *scene, Model *model)
+void Loader::ConvertAiMeshes(std::vector<RefCountedPtr<StaticGeometry> > &geoms, const aiScene *scene)
 {
 	//XXX sigh, workaround for obj loader
 	int matIdxOffs = 0;
 	if (scene->mNumMaterials > scene->mNumMeshes)
 		matIdxOffs = 1;
 
-	//turn meshes into surfaces
+	//turn meshes into static geometry nodes
 	for (unsigned int i=0; i<scene->mNumMeshes; i++) {
 		const aiMesh *mesh = scene->mMeshes[i];
 		assert(mesh->HasNormals());
+
+		RefCountedPtr<StaticGeometry> geom(new StaticGeometry(m_renderer));
+		geom->SetName(stringf("sgMesh%0{u}", i));
 
 		const bool hasUVs = mesh->HasTextureCoords(0);
 		if (!hasUVs) AddLog(stringf("%0: missing UV coordinates", m_curMeshDef));
@@ -484,29 +488,34 @@ void Loader::ConvertAiMeshesToSurfaces(std::vector<RefCountedPtr<Graphics::Surfa
 		const aiMaterial *amat = scene->mMaterials[mesh->mMaterialIndex];
 		aiString aiMatName;
 		if(AI_SUCCESS == amat->Get(AI_MATKEY_NAME,aiMatName))
-			mat = model->GetMaterialByName(std::string(aiMatName.C_Str()));
+			mat = m_model->GetMaterialByName(std::string(aiMatName.C_Str()));
 
 		if (!mat.Valid()) {
 			const unsigned int matIdx = mesh->mMaterialIndex - matIdxOffs;
 			AddLog(stringf("%0: no material %1, using material %2{u} instead", m_curMeshDef, aiMatName.C_Str(), matIdx+1));
-			mat = model->GetMaterialByIndex(matIdx);
+			mat = m_model->GetMaterialByIndex(matIdx);
 		}
-
 		assert(mat.Valid());
 
-		Graphics::VertexArray *vts =
-			new Graphics::VertexArray(
-				Graphics::ATTRIB_POSITION |
-				Graphics::ATTRIB_NORMAL |
-				Graphics::ATTRIB_UV0,
-				mesh->mNumVertices);
+		//turn on alpha blending and mark entire node as transparent
+		//(all importers split by material so far)
+		if (mat->diffuse.a < 0.99f) {
+			geom->SetNodeMask(NODE_TRANSPARENT);
+			geom->m_blendMode = Graphics::BLEND_ALPHA;
+		}
 
+		const Graphics::AttributeSet vtxAttribs =
+			Graphics::ATTRIB_POSITION |
+			Graphics::ATTRIB_NORMAL |
+			Graphics::ATTRIB_UV0;
+		Graphics::VertexArray *vts = new Graphics::VertexArray(vtxAttribs, mesh->mNumVertices);
+
+		// huge meshes are split by the importer so this should not exceed 65K indices
 		RefCountedPtr<Graphics::Surface> surface(new Graphics::Surface(Graphics::TRIANGLES, vts, mat));
 		std::vector<unsigned short> &indices = surface->GetIndices();
 		indices.reserve(mesh->mNumFaces * 3);
 
 		//copy indices first
-		//note: index offsets are not adjusted, StaticMesh should do that for us
 		for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
 			const aiFace *face = &mesh->mFaces[f];
 			for (unsigned int j = 0; j < face->mNumIndices; j++) {
@@ -523,9 +532,17 @@ void Loader::ConvertAiMeshesToSurfaces(std::vector<RefCountedPtr<Graphics::Surfa
 			vts->Add(vector3f(vtx.x, vtx.y, vtx.z),
 				vector3f(norm.x, norm.y, norm.z),
 				vector2f(uv0.x, uv0.y));
+
+			//update bounding box
+			//untransformed points, collision visitor will transform
+			geom->m_boundingBox.Update(vtx.x, vtx.y, vtx.z);
 		}
 
-		surfaces.push_back(surface);
+		RefCountedPtr<Graphics::StaticMesh> smesh(new Graphics::StaticMesh(Graphics::TRIANGLES));
+		smesh->AddSurface(surface);
+		geom->AddMesh(smesh);
+
+		geoms.push_back(geom);
 	}
 }
 
@@ -698,21 +715,6 @@ void Loader::CreateLabel(Group *parent, const matrix4x4f &m)
 	parent->AddChild(trans);
 }
 
-void Loader::CreateLight(Group *parent, const matrix4x4f &m)
-{
-	//One node per light, obviously not as optimal as intended
-	std::vector<vector3f> points;
-	points.push_back(m.GetTranslate());
-	Graphics::MaterialDescriptor desc;
-	desc.twoSided = true;
-	desc.textures = 1;
-	RefCountedPtr<Graphics::Material> mat(m_renderer->CreateMaterial(desc));
-	mat->texture0 = Graphics::TextureBuilder::Billboard("textures/halo.png").GetOrCreateTexture(m_renderer, "billboard");
-	mat->diffuse = Color(1.f, 0.f, 0.f, 1.f);
-	Billboard *bill = new Billboard(m_renderer, points, mat, 1.f);
-	parent->AddChild(bill);
-}
-
 void Loader::CreateThruster(Group* parent, const matrix4x4f &m, const std::string &name, const matrix4x4f& accum)
 {
 	const bool linear = starts_with(name, "thruster_linear");
@@ -736,7 +738,7 @@ void Loader::CreateThruster(Group* parent, const matrix4x4f &m, const std::strin
 	parent->AddChild(trans);
 }
 
-void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPtr<Graphics::Surface> >& surfaces, const matrix4x4f &accum)
+void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPtr<StaticGeometry> >& geoms, const matrix4x4f &accum)
 {
 	Group *parent = _parent;
 	const std::string nodename(node->mName.C_Str());
@@ -746,7 +748,12 @@ void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPt
 	//lights, and possibly other special nodes should be leaf nodes (without meshes)
 	if (node->mNumChildren == 0 && node->mNumMeshes == 0) {
 		if (starts_with(nodename, "navlight_")) {
-			CreateLight(parent, m);
+			//Create a MT, lights are attached by client.
+			matrix4x4f lightPos = matrix4x4f::Translation(m.GetTranslate());
+			MatrixTransform *lightPoint = new MatrixTransform(m_renderer, lightPos);
+			lightPoint->SetNodeMask(0x0); //don't render
+			lightPoint->SetName(nodename);
+			_parent->AddChild(lightPoint);
 		} else if (starts_with(nodename, "thruster_")) {
 			CreateThruster(parent, m, nodename, accum);
 		} else if (starts_with(nodename, "label_")) {
@@ -755,6 +762,12 @@ void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPt
 			vector3f tagpos = accum * m.GetTranslate();
 			MatrixTransform *tagMt = new MatrixTransform(m_renderer, matrix4x4f::Translation(tagpos));
 			m_model->AddTag(nodename, tagMt);
+		} else if (starts_with(nodename, "docking_")) {
+			m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
+		} else if (starts_with(nodename, "leaving_")) {
+			m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
+		} else if (starts_with(nodename, "approach_")) {
+			m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
 		}
 		return;
 	}
@@ -768,7 +781,7 @@ void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPt
 	//nodes named collision_* are not added as renderable geometry
 	if (node->mNumMeshes == 1 && starts_with(nodename, "collision_")) {
 		const unsigned int collflag = GetGeomFlagForNodeName(nodename);
-		RefCountedPtr<Graphics::Surface> surf = surfaces.at(node->mMeshes[0]);
+		RefCountedPtr<Graphics::Surface> surf = geoms.at(node->mMeshes[0])->GetMesh(0)->GetSurface(0);
 		RefCountedPtr<CollisionGeometry> cgeom(new CollisionGeometry(m_renderer, surf.Get(), collflag));
 		cgeom->SetName(nodename + "_cgeom");
 		parent->AddChild(cgeom.Get());
@@ -777,12 +790,6 @@ void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPt
 
 	//nodes with visible geometry (StaticGeometry and decals)
 	if (node->mNumMeshes > 0) {
-		//is this node animated? add a transform
-		//does this node have children? Add a group
-		RefCountedPtr<StaticGeometry> geom(new StaticGeometry(m_renderer));
-		geom->SetName(nodename + "_mesh");
-		RefCountedPtr<Graphics::StaticMesh> smesh(new Graphics::StaticMesh(Graphics::TRIANGLES));
-
 		//expecting decal_0X
 		unsigned int numDecal = 0;
 		if (starts_with(nodename, "decal_")) {
@@ -792,44 +799,23 @@ void Loader::ConvertNodes(aiNode *node, Group *_parent, std::vector<RefCountedPt
 		}
 
 		for(unsigned int i=0; i<node->mNumMeshes; i++) {
-			RefCountedPtr<Graphics::Surface> surf = surfaces.at(node->mMeshes[i]);
+			RefCountedPtr<StaticGeometry> geom = geoms.at(node->mMeshes[i]);
 
-			//turn on alpha blending and mark entire node as transparent
-			//(all importers split by material so far)
-			if (surf->GetMaterial()->diffuse.a < 0.99f) {
-				geom->SetNodeMask(NODE_TRANSPARENT);
-				geom->m_blendMode = Graphics::BLEND_ALPHA;
-			}
+			//handle special decal material
 			//set special material for decals
 			if (numDecal > 0) {
 				geom->SetNodeMask(NODE_TRANSPARENT);
 				geom->m_blendMode = Graphics::BLEND_ALPHA;
-				surf->SetMaterial(GetDecalMaterial(numDecal));
-			}
-			//update bounding box
-			//untransformed points, collision visitor will transform
-			Graphics::VertexArray *vts = surf->GetVertices();
-			for (unsigned int j=0; j<vts->position.size(); j++) {
-				const vector3f &vtx = vts->position[j];
-				geom->m_boundingBox.Update(vtx.x, vtx.y, vtx.z);
+				geom->GetMesh(0)->GetSurface(0)->SetMaterial(GetDecalMaterial(numDecal));
 			}
 
-			//Out of space? Add a new mesh.
-			if(smesh->GetAvailableVertexSpace() < surf->GetNumVerts()) {
-				geom->AddMesh(smesh);
-				smesh = RefCountedPtr<Graphics::StaticMesh>(new Graphics::StaticMesh(Graphics::TRIANGLES));
-			}
-
-			smesh->AddSurface(surf);
+			parent->AddChild(geom.Get());
 		}
-		geom->AddMesh(smesh);
-
-		parent->AddChild(geom.Get());
 	}
 
 	for(unsigned int i=0; i<node->mNumChildren; i++) {
 		aiNode *child = node->mChildren[i];
-		ConvertNodes(child, parent, surfaces, accum * m);
+		ConvertNodes(child, parent, geoms, accum * m);
 	}
 }
 
@@ -895,15 +881,11 @@ void Loader::LoadCollision(const std::string &filename)
 unsigned int Loader::GetGeomFlagForNodeName(const std::string &nodename)
 {
 	if (nodename.length() >= 14) {
-		const std::string pad = nodename.substr(10, 4);
-		if (pad == "pad1")
-			return 0x10;
-		else if (pad == "pad2")
-			return 0x11;
-		else if (pad == "pad3")
-			return 0x12;
-		else if (pad == "pad4")
-			return 0x14;
+		const std::string pad = nodename.substr(13);
+		const int padID = atoi(pad.c_str())-1;
+		if(padID<240) {
+			return 0x10 + padID;
+		}
 	}
 	return 0x0;
 }

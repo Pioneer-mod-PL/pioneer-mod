@@ -186,6 +186,8 @@ COULD_NOT_OPEN_FILENAME
     Nie mogę odczytać %path
 GAME_LOAD_CORRUPT
     Ten zapis nie może zostać wczytany ponieważ zawiera błędy.
+GAME_LOAD_WRONG_VERSION
+    Ten zapis gry nie może zostać załadowany, ponieważ pochodzi z innej wersji gry Pioneer.
 GAME_LOAD_CANNOT_OPEN
     Ten zapis nie może być wczytany z powodu braku uprawnień bądź z innej przyczyny...
 GAME_SAVE_CANNOT_WRITE
@@ -534,14 +536,16 @@ Y
     Y
 Z
     Z
-AXIS
-     " Axis"
+JOY_AXIS
+    Joystick(%joynum)  Oś(%{sign}%axis)
 WEAPONS
     Bronie
 TARGET_OBJECT_IN_SIGHTS
     Zaznacz widoczny obiekt
 FIRE_LASER
     Strzał lasera
+FIRE_MISSILE
+    Wystrzelenie rakiety
 SHIP_ORIENTATION
     Manewrowanie
 PITCH_UP
@@ -595,11 +599,11 @@ TOGGLE_HUD_MODE
 JOYSTICK_INPUT
     Ustawienia Joysticka
 PITCH
-    Pułap
+    Odchylenie pionowe
 ROLL
     Obrót
 YAW
-    Odchylenie
+    Odchylenie poziome
 MISSILE
     pocisk
 SIMULATING_UNIVERSE_EVOLUTION_N_BYEARS
@@ -681,11 +685,15 @@ SECTOR_X_Y_Z
 CURRENT_SYSTEM
     Aktualny system
 SELECTED_SYSTEM
-    Wybrany system
+    Wskazany system
 HYPERSPACE_TARGET
     Cel nadprzestrzenny
+DRAW_VERTICAL_LINES
+    Pokazuj pionowe linie
+DRAW_OUT_RANGE_LABELS
+    Nazwy nieosiągalnych systemów
 FOLLOWING_SELECTION
-    podążanie za celem
+    wybieraj wskazany
 LOCKED
     zablokowany
 EXACT_MATCH_X
@@ -705,9 +713,9 @@ TRIPLE_SYSTEM
 BINARY_SYSTEM
     System podwójny
 ENABLED_AUTOMATIC_SYSTEM_SELECTION
-    Włącz automatyczny wybór systemu.
+    Centrowanie widoku na wskazywanym systemie - włączone.
 DISABLED_AUTOMATIC_SYSTEM_SELECTION
-    Wyłącz automatyczny wybór systemu.
+    Centrowanie widoku na wskazywanym systemie - wyłączone.
 FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED
     Dren paliwowy włączony. Masz %quantity ton wodoru.
 CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED
@@ -988,6 +996,8 @@ ECCENTRICITY
     Mimośród
 AXIAL_TILT
     Nachylenie osi
+EQUATORIAL_RADIUS_TO_POLAR_RADIUS_RATIO
+    Stosunek średnicy równikowej do międzybiegunowej
 N_DEGREES
     %angle{f.1} stopni
 DAY_LENGTH

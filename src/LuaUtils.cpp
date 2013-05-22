@@ -6,6 +6,9 @@
 #include "FileSystem.h"
 
 extern "C" {
+#ifdef ENABLE_LDB
+#include <ldbcore.h>
+#endif //ENABLE_LDB
 #include "jenkins/lookup3.h"
 }
 
@@ -112,6 +115,9 @@ static const luaL_Reg STANDARD_LIBS[] = {
 	{ LUA_BITLIBNAME, luaopen_bit32 },
 	{ LUA_MATHLIBNAME, luaopen_math },
 	{ LUA_DBLIBNAME, luaopen_debug },
+#ifdef ENABLE_LDB
+	{ LUA_LDBCORELIBNAME, luaopen_ldbcore},
+#endif //ENABLE_LDB
 	{ "util", luaopen_utils },
 	{ 0, 0 }
 };
@@ -299,7 +305,7 @@ static void pi_lua_dofile(lua_State *l, const FileSystem::FileData &code)
 	}
 
 	bool trusted = code.GetInfo().GetSource().IsTrusted();
-	const std::string chunkName = (trusted ? "[T] " : "") + path;
+	const std::string chunkName = (trusted ? "[T] @" : "@") + path;
 
 	if (luaL_loadbuffer(l, source.begin, source.Size(), chunkName.c_str())) {
 		pi_lua_panic(l);
@@ -340,17 +346,7 @@ void pi_lua_dofile(lua_State *l, const std::string &path)
 		fprintf(stderr, "could not read Lua file '%s'\n", path.c_str());
 	}
 
-	// XXX kill CurrentDirectory
-	std::string dir = code->GetInfo().GetDir();
-	if (dir.empty()) { dir = "."; }
-	lua_pushstring(l, dir.c_str());
-	lua_setglobal(l, "CurrentDirectory");
-
 	pi_lua_dofile(l, *code);
-
-	// XXX kill CurrentDirectory
-	lua_pushnil(l);
-	lua_setglobal(l, "CurrentDirectory");
 
 	LUA_DEBUG_END(l, 0);
 }
@@ -368,10 +364,6 @@ void pi_lua_dofile_recursive(lua_State *l, const std::string &basepath)
 		} else {
 			assert(info.IsFile());
 			if (ends_with(fpath, ".lua")) {
-				// XXX kill CurrentDirectory
-				lua_pushstring(l, basepath.empty() ? "." : basepath.c_str());
-				lua_setglobal(l, "CurrentDirectory");
-
 				RefCountedPtr<FileSystem::FileData> code = info.Read();
 				pi_lua_dofile(l, *code);
 			}
@@ -380,36 +372,6 @@ void pi_lua_dofile_recursive(lua_State *l, const std::string &basepath)
 	}
 
 	LUA_DEBUG_END(l, 0);
-}
-
-// XXX compatibility
-int pi_load_lua(lua_State *l) {
-	const std::string path = luaL_checkstring(l, 1);
-	FileSystem::FileInfo info = FileSystem::gameDataFiles.Lookup(path);
-
-	lua_getglobal(l, "CurrentDirectory");
-	std::string currentDir = luaL_optstring(l, -1, "");
-	lua_pop(l, 1);
-
-	if (info.IsDir()) {
-		pi_lua_dofile_recursive(l, path);
-	} else if (info.IsFile() && ends_with(path, ".lua")) {
-		pi_lua_dofile(l, path);
-	} else if (info.IsFile()) {
-		return luaL_error(l, "load_lua('%s') called on a file without a .lua extension", path.c_str());
-	} else if (!info.Exists()) {
-		return luaL_error(l, "load_lua('%s') called on a path that doesn't exist", path.c_str());
-	} else {
-		return luaL_error(l, "load_lua('%s') called on a path that doesn't refer to a valid file", path.c_str());
-	}
-
-	if (currentDir.empty())
-		lua_pushnil(l);
-	else
-		lua_pushlstring(l, currentDir.c_str(), currentDir.size());
-	lua_setglobal(l, "CurrentDirectory");
-
-	return 0;
 }
 
 void pi_lua_warn(lua_State *l, const char *format, ...)

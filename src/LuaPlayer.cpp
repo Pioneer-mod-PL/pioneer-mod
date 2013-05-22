@@ -2,7 +2,6 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaObject.h"
-#include "LuaSystemPath.h"
 #include "LuaUtils.h"
 #include "LuaConstants.h"
 #include "Player.h"
@@ -271,13 +270,14 @@ static int l_set_combat_target(lua_State *l)
 
 static int l_get_hyperspace_target(lua_State *l)
 {
-	LuaObject<Player>::CheckFromLua(1);
-	if (Pi::game->IsNormalSpace()) {
-		SystemPath sys = Pi::sectorView->GetHyperspaceTarget();
-		assert(sys.IsSystemPath());
-		LuaSystemPath::PushToLua(&sys);
-	} else
-		lua_pushnil(l);
+	Player *player = LuaObject<Player>::CheckFromLua(1);
+	SystemPath target;
+	if (Pi::game->IsNormalSpace())
+		target = Pi::sectorView->GetHyperspaceTarget();
+	else
+		target = player->GetHyperspaceDest();
+	assert(target.IsSystemPath());
+	LuaObject<SystemPath>::PushToLua(target);
 	return 1;
 }
 
@@ -305,7 +305,7 @@ static int l_set_hyperspace_target(lua_State *l)
 {
 	LuaObject<Player>::CheckFromLua(1);
 	if (Pi::game->IsNormalSpace()) {
-		const SystemPath sys = *LuaSystemPath::CheckFromLua(2);
+		const SystemPath sys = *LuaObject<SystemPath>::CheckFromLua(2);
 		if (!sys.IsSystemPath())
 			return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path");
 		Pi::sectorView->SetHyperspaceTarget(sys);
@@ -338,6 +338,6 @@ template <> void LuaObject<Player>::RegisterClass()
 		{ 0, 0 }
 	};
 
-	LuaObjectBase::CreateClass(s_type, l_parent, l_methods, NULL, NULL);
+	LuaObjectBase::CreateClass(s_type, l_parent, l_methods, 0, 0);
 	LuaObjectBase::RegisterPromotion(l_parent, s_type, LuaObject<Player>::DynamicCastPromotionTest);
 }

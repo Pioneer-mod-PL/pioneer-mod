@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
@@ -99,11 +99,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\fixed.h" />
-    <ClInclude Include="..\..\src\mtrand.h" />
     <ClInclude Include="..\..\src\perlin.h" />
+    <ClInclude Include="..\..\src\Random.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\mtrand.cpp" />
     <ClCompile Include="..\..\src\perlin.cpp" />
     <ClCompile Include="..\..\src\win32\perlintest.cpp" />
   </ItemGroup>

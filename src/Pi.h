@@ -6,13 +6,14 @@
 
 #include "utils.h"
 #include "gui/Gui.h"
-#include "mtrand.h"
+#include "Random.h"
 #include "gameconsts.h"
 #include "GameConfig.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
 #include "CargoBody.h"
 #include "Space.h"
+#include "JobQueue.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -103,7 +104,7 @@ public:
 	static float CalcHyperspaceFuelOut(int hyperclass, float dist, float hyperspace_range_max);
 	static void Message(const std::string &message, const std::string &from = "", enum MsgLevel level = MSG_NORMAL);
 	static std::string GetSaveDir();
-	static SceneGraph::Model *FindModel(const std::string&);
+	static SceneGraph::Model *FindModel(const std::string&, bool allowPlaceholder = true);
 
 	static const char SAVE_DIR_NAME[];
 
@@ -123,7 +124,7 @@ public:
 
 	static RefCountedPtr<UI::Context> ui;
 
-	static MTRand rng;
+	static Random rng;
 	static int statSceneTris;
 
 	static void SetView(View *v);
@@ -157,9 +158,14 @@ public:
 
 	static struct DetailLevel detail;
 	static GameConfig *config;
+
+	static JobQueue *Jobs() { return jobQueue.Get();}
+
 private:
 	static void HandleEvents();
 	static void InitJoysticks();
+
+	static ScopedPtr<JobQueue> jobQueue;
 
 	static bool menuDone;
 
