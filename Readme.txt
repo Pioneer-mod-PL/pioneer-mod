@@ -14,6 +14,7 @@ Polski mod dla gry Pioneer.
 
   Wersja moda jest w miarę możliwości aktualizowana i korygowana
   w Branch/mod z najnowszym pionerspacesim/pioneer/master.
+  Czytaj plik data/files_list.txt
 
 -------------------------------------------------------------------------
 
@@ -22,6 +23,8 @@ Uruchomienie:
   Wybierz wersję Moda pasującą do Twojej wersji gry:
     - alpha31modPL.zip
     http://www.speedyshare.com/fw5fk/alpha31modPL.zip
+    - 201305.107
+    http://www.speedyshare.com/bCmrM/201305.107modPL.zip
 
   Pobrany plik ZIP umieść w katalogu 'użytkownik/My Documents/Pioneer/mods'.
 
