@@ -2,7 +2,7 @@
 -- Licensed under the terms of CC-BY-SA 3.0. See licenses/CC-BY-SA-3.0.txt
 
 define_ship {
-	name='FALA Ciężki Myśliwiec Hipersoniczny',
+	name='WAVE Myśliwiec Hipersoniczny',
 	model='wave',
 	forward_thrust = 88e5,
 	reverse_thrust = 29e5,

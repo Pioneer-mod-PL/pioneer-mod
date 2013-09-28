@@ -28,6 +28,7 @@
 #include "matrix4x4.h"
 #include "Quaternion.h"
 #include <algorithm>
+#include <sstream>
 
 const double WorldView::PICK_OBJECT_RECT_SIZE = 20.0;
 static const Color s_hudTextColor(0.0f,1.0f,0.0f,0.9f);
@@ -185,6 +186,13 @@ void WorldView::InitObject()
 	m_bodyLabels = new Gui::LabelSet();
 	m_bodyLabels->SetLabelColor(Color(1.0f, 1.0f, 1.0f, 0.9f));
 	Add(m_bodyLabels, 0, 0);
+
+	{
+		m_pauseText = new Gui::Label(std::string("#f7f") + Lang::PAUSED);
+		float w, h;
+		Gui::Screen::MeasureString(Lang::PAUSED, w, h);
+		Add(m_pauseText, 0.5f * (Gui::Screen::GetWidth() - w), 100);
+	}
 	Gui::Screen::PopFont();
 
 	m_navTargetIndicator.label = (new Gui::Label(""))->Color(0.0f, 1.0f, 0.0f);
@@ -273,6 +281,8 @@ void WorldView::SetCamType(enum CamType c)
 	}
 
 	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+
+	m_activeCameraController->Reset();
 
 	onChangeCamType.emit();
 
@@ -383,7 +393,14 @@ void WorldView::Draw3D()
 void WorldView::OnToggleLabels()
 {
 	if (Pi::GetView() == this) {
-		m_labelsOn = !m_labelsOn;
+		if (Pi::DrawGUI && m_labelsOn) {
+			m_labelsOn = false;
+		} else if (Pi::DrawGUI && !m_labelsOn) {
+			Pi::DrawGUI = false;
+		} else if (!Pi::DrawGUI) {
+			Pi::DrawGUI = true;
+			m_labelsOn = true;
+		}
 	}
 }
 
@@ -392,7 +409,6 @@ void WorldView::ShowAll()
 	View::ShowAll(); // by default, just delegate back to View
 	RefreshButtonStateAndVisibility();
 }
-
 
 static Color get_color_for_warning_meter_bar(float v) {
 	Color c;
@@ -419,6 +435,11 @@ void WorldView::RefreshButtonStateAndVisibility()
 	assert(!Pi::player->IsDead());
 
 	Pi::cpan->ClearOverlay();
+
+	if (Pi::game->IsPaused())
+		m_pauseText->Show();
+	else
+		m_pauseText->Hide();
 
 	if (Pi::player->GetFlightState() != Ship::HYPERSPACE) {
 		Pi::cpan->SetOverlayToolTip(ShipCpanel::OVERLAY_TOP_LEFT,     Lang::SHIP_VELOCITY_BY_REFERENCE_OBJECT);
@@ -519,27 +540,35 @@ void WorldView::RefreshButtonStateAndVisibility()
 	}
 #if WITH_DEVKEYS
 	if (Pi::showDebugInfo) {
-		char buf[1024], aibuf[256];
-		vector3d pos = Pi::player->GetPosition();
-		vector3d abs_pos = Pi::player->GetPositionRelTo(Pi::game->GetSpace()->GetRootFrame());
+		std::ostringstream ss;
 
-		//Calculate lat/lon for ship position
-		const vector3d dir = pos.NormalizedSafe();
-		const float lat = RAD2DEG(asin(dir.y));
-		const float lon = RAD2DEG(atan2(dir.x, dir.z));
+		if (Pi::player->GetFlightState() != Ship::HYPERSPACE) {
+			vector3d pos = Pi::player->GetPosition();
+			vector3d abs_pos = Pi::player->GetPositionRelTo(Pi::game->GetSpace()->GetRootFrame());
 
-		const char *rel_to = (Pi::player->GetFrame() ? Pi::player->GetFrame()->GetLabel().c_str() : "System");
-		const char *rot_frame = (Pi::player->GetFrame()->IsRotFrame() ? "yes" : "no");
+			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
+			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
+
+			const SystemPath &path(Pi::player->GetFrame()->GetSystemBody()->path);
+			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
+				Pi::player->GetFrame()->GetLabel(),
+				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
+			ss << stringf("(%0{f.2} km), rotating: %1\n",
+				pos.Length()/1000, (Pi::player->GetFrame()->IsRotFrame() ? "yes" : "no"));
+
+			//Calculate lat/lon for ship position
+			const vector3d dir = pos.NormalizedSafe();
+			const float lat = RAD2DEG(asin(dir.y));
+			const float lon = RAD2DEG(atan2(dir.x, dir.z));
+
+			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
+		}
+
+		char aibuf[256];
 		Pi::player->AIGetStatusText(aibuf); aibuf[255] = 0;
-		snprintf(buf, sizeof(buf), "Pos: %.1f,%.1f,%.1f\n"
-			"AbsPos: %.1f,%.1f,%.1f (%.3f AU)\n"
-			"Rel-to: %s (%.0f km), rotating: %s\n" "%s"
-			"\nLat / Lon : %.8f / %.8f",
-			pos.x, pos.y, pos.z,
-			abs_pos.x, abs_pos.y, abs_pos.z, abs_pos.Length()/AU,
-			rel_to, pos.Length()/1000, rot_frame, aibuf,lat,lon);
+		ss << aibuf << std::endl;
 
-		m_debugInfo->SetText(buf);
+		m_debugInfo->SetText(ss.str());
 		m_debugInfo->Show();
 	} else {
 		m_debugInfo->Hide();
@@ -616,15 +645,17 @@ void WorldView::RefreshButtonStateAndVisibility()
 
 				Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, stringf(Lang::PRESSURE_N_ATMOSPHERES, formatarg("pressure", pressure)));
 
-				m_hudHullTemp->SetValue(float(Pi::player->GetHullTemperature()));
-				m_hudHullTemp->Show();
-			} else {
-				Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, "");
-				m_hudHullTemp->Hide();
+				if (Pi::player->GetHullTemperature() > 0.01) {
+					m_hudHullTemp->SetValue(float(Pi::player->GetHullTemperature()));
+					m_hudHullTemp->Show();
+				} else {
+					m_hudHullTemp->Hide();
+				}
 			}
 		} else {
 			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, "");
 			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, "");
+			m_hudHullTemp->Hide();
 		}
 
 		m_hudFuelGauge->SetValue(Pi::player->GetFuel());
@@ -832,6 +863,11 @@ void WorldView::Update()
 void WorldView::OnSwitchTo()
 {
 	RefreshButtonStateAndVisibility();
+}
+
+void WorldView::OnSwitchFrom()
+{
+	Pi::DrawGUI = true;
 }
 
 void WorldView::ToggleTargetActions()
@@ -1055,8 +1091,8 @@ void WorldView::UpdateCommsOptions()
 				button = AddCommsOption(Lang::REQUEST_DOCKING_CLEARANCE, ypos, optnum++);
 				button->onClick.connect(sigc::bind(sigc::ptr_fun(&PlayerRequestDockingClearance), reinterpret_cast<SpaceStation*>(navtarget)));
 				ypos += 32;
-			} 
-			
+			}
+
 			if( hasAutopilot )
 			{
 				button = AddCommsOption(Lang::AUTOPILOT_DOCK_WITH_STATION, ypos, optnum++);

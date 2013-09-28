@@ -1,6 +1,8 @@
 -- Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
 -- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+local Translate = import("Translate")
+
 Translate:Add({
 	English = {
 		-- Main menu
@@ -104,6 +106,7 @@ Translate:Add({
 		['Negotiate'] = 'Negotiate',
 		['Crew Roster'] = 'Crew Roster',
 		['Give orders to crew'] = 'Give orders to crew',
+		['Total:'] = 'Total:',
 
 		-- Taunts
 		["I'm tired of working for nothing. Don't you know what a contract is?"] = "I'm tired of working for nothing. Don't you know what a contract is?",
@@ -232,6 +235,7 @@ Translate:Add({
 		['Negotiate'] = 'Negocjacje',
 		['Crew Roster'] = 'Lista załogi',
 		['Give orders to crew'] = 'Wydaj rozkaz załodze',
+		['Total:'] = 'Razem:',
 
 		-- Taunts
 		["I'm tired of working for nothing. Don't you know what a contract is?"] = "Odczuwam zmęczenie pracując za darmo. Czy Ty wiesz co to kontrakt?",
@@ -635,7 +639,7 @@ Translate:Add({
 		['Cancel']         = 'Zrušit',
 
 		-- Load dialog
-		['Select game to load...'] = 'Načíst hru...',
+		['Select game to load...'] = 'Vyber uloženou hru...',
 
 		-- Equipment
 		['Equipment'] = 'Vybavení',
@@ -722,6 +726,7 @@ Translate:Add({
 		['Negotiate'] = 'Vyjenávat',
 		['Crew Roster'] = 'Seznam posádky',
 		['Give orders to crew'] = 'Dát posádce rozkazy',
+		['Total:'] = 'Celkem:',
 
 		-- Taunts
 		["I'm tired of working for nothing. Don't you know what a contract is?"] = "Už mě unavuje pracovat pro nic za nic. Víš vůbec co to je smlouva?",
