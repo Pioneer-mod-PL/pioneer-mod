@@ -48,12 +48,14 @@ ships\amphiesma.lua
 ships\deneb.lua
 ships\dsminer.lua
 ships\kanara.lua
+ships\kanara_civ.lua
 ships\lunarshuttle.lua
 ships\molamola.lua
 ships\natrix.lua
 ships\pumpkinseed.lua
 ships\venturestar.lua
 ships\wave.lua
+ships\xylophis.lua
 [usunięte]systems\custom\03_elite.lua
 [usunięte]systems\custom\04_empire.lua
 systems\00_sol.lua
