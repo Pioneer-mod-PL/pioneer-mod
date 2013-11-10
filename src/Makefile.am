@@ -11,7 +11,7 @@ include $(top_srcdir)/Makefile.common
 
 AM_CFLAGS += $(WARN_CFLAGS)
 AM_CPPFLAGS += $(WARN_CPPFLAGS)
-AM_CXXFLAGS += $(WARN_CXXFLAGS)
+AM_CXXFLAGS += $(STD_CXXFLAGS) $(WARN_CXXFLAGS)
 
 bin_PROGRAMS = pioneer
 noinst_HEADERS = \
@@ -37,9 +37,9 @@ noinst_HEADERS = \
 	EnumStrings.h \
 	EquipSet.h \
 	EquipType.h \
+	FaceGenManager.h \
 	FaceVideoLink.h \
 	Factions.h \
-	FileSelectorWidget.h \
 	FileSystem.h \
 	FontCache.h \
 	Form.h \
@@ -47,7 +47,6 @@ noinst_HEADERS = \
 	Frame.h \
 	GalacticView.h \
 	Game.h \
-	GameMenuView.h \
 	GeoSphere.h \
 	HyperspaceCloud.h \
 	IniConfig.h \
@@ -140,6 +139,7 @@ noinst_HEADERS = \
 	SpaceStation.h \
 	SpaceStationType.h \
 	SpaceStationView.h \
+	SpeedLines.h \
 	Star.h \
 	SystemInfoView.h \
 	SystemView.h \
@@ -177,9 +177,9 @@ pioneer_SOURCES	= \
 	DynamicBody.cpp \
 	EnumStrings.cpp \
 	EquipType.cpp \
+	FaceGenManager.cpp \
 	FaceVideoLink.cpp \
 	Factions.cpp \
-	FileSelectorWidget.cpp \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
 	FontCache.cpp \
@@ -187,7 +187,6 @@ pioneer_SOURCES	= \
 	Frame.cpp \
 	GalacticView.cpp \
 	Game.cpp \
-	GameMenuView.cpp \
 	GeoPatch.cpp \
 	GeoPatchContext.cpp \
 	GeoPatchID.cpp \
@@ -286,6 +285,7 @@ pioneer_SOURCES	= \
 	SpaceStation.cpp \
 	SpaceStationType.cpp \
 	SpaceStationView.cpp \
+	SpeedLines.cpp \
 	Star.cpp \
 	SystemInfoView.cpp \
 	SystemView.cpp \

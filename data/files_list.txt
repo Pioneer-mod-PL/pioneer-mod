@@ -52,7 +52,9 @@ ships\kanara_civ.lua
 ships\lunarshuttle.lua
 ships\molamola.lua
 ships\natrix.lua
+ships\nerodia.lua
 ships\pumpkinseed.lua
+ships\sinonatrix.lua
 ships\venturestar.lua
 ships\wave.lua
 ships\xylophis.lua

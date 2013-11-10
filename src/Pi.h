@@ -20,7 +20,6 @@
 
 class DeathView;
 class GalacticView;
-class GameMenuView;
 class Intro;
 class LuaConsole;
 class LuaNameGen;
@@ -89,6 +88,8 @@ public:
     static bool IsMouseYInvert() { return mouseYInvert; }
 	static bool IsNavTunnelDisplayed() { return navTunnelDisplayed; }
 	static void SetNavTunnelDisplayed(bool state) { navTunnelDisplayed = state; }
+	static bool AreSpeedLinesDisplayed() { return speedLinesDisplayed; }
+	static void SetSpeedLinesDisplayed(bool state) { speedLinesDisplayed = state; }
 	static int MouseButtonState(int button) { return mouseButton[button]; }
 	/// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
 	/// This is a default value only, centralized here to promote uniform user expericience.
@@ -137,7 +138,7 @@ public:
 	static Player *player;
 	static SectorView *sectorView;
 	static GalacticView *galacticView;
-	static GameMenuView *gameMenuView;
+	static UIView *settingsView;
 	static SystemInfoView *systemInfoView;
 	static SystemView *systemView;
 	static WorldView *worldView;
@@ -161,7 +162,7 @@ public:
 	static struct DetailLevel detail;
 	static GameConfig *config;
 
-	static JobQueue *Jobs() { return jobQueue.Get();}
+	static JobQueue *Jobs() { return jobQueue.get();}
 
 	static bool DrawGUI;
 
@@ -169,7 +170,7 @@ private:
 	static void HandleEvents();
 	static void InitJoysticks();
 
-	static ScopedPtr<JobQueue> jobQueue;
+	static std::unique_ptr<JobQueue> jobQueue;
 
 	static bool menuDone;
 
@@ -205,6 +206,7 @@ private:
 	static Sound::MusicPlayer musicPlayer;
 
 	static bool navTunnelDisplayed;
+	static bool speedLinesDisplayed;
 
 	static Gui::Fixed *menu;
 };

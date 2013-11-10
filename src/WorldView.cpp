@@ -209,10 +209,12 @@ void WorldView::InitObject()
 
 	// XXX m_renderer not set yet
 	Graphics::TextureBuilder b = Graphics::TextureBuilder::UI("icons/indicator_mousedir.png");
-	m_indicatorMousedir.Reset(new Gui::TexturedQuad(b.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+	m_indicatorMousedir.reset(new Gui::TexturedQuad(b.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
 
 	const Graphics::TextureDescriptor &descriptor = b.GetDescriptor();
 	m_indicatorMousedirSize = vector2f(descriptor.dataSize.x*descriptor.texSize.x,descriptor.dataSize.y*descriptor.texSize.y);
+
+    m_speedLines.reset(new SpeedLines(Pi::player));
 
 	//get near & far clipping distances
 	//XXX m_renderer not set yet
@@ -222,10 +224,10 @@ void WorldView::InitObject()
 
 	const float fovY = Pi::config->Float("FOVVertical");
 
-	m_camera.Reset(new Camera(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_internalCameraController.Reset(new InternalCameraController(m_camera.Get(), Pi::player));
-	m_externalCameraController.Reset(new ExternalCameraController(m_camera.Get(), Pi::player));
-	m_siderealCameraController.Reset(new SiderealCameraController(m_camera.Get(), Pi::player));
+	m_camera.reset(new Camera(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
+	m_internalCameraController.reset(new InternalCameraController(m_camera.get(), Pi::player));
+	m_externalCameraController.reset(new ExternalCameraController(m_camera.get(), Pi::player));
+	m_siderealCameraController.reset(new SiderealCameraController(m_camera.get(), Pi::player));
 	SetCamType(m_camType); //set the active camera
 
 	m_onHyperspaceTargetChangedCon =
@@ -271,13 +273,13 @@ void WorldView::SetCamType(enum CamType c)
 
 	switch(m_camType) {
 		case CAM_INTERNAL:
-			m_activeCameraController = m_internalCameraController.Get();
+			m_activeCameraController = m_internalCameraController.get();
 			break;
 		case CAM_EXTERNAL:
-			m_activeCameraController = m_externalCameraController.Get();
+			m_activeCameraController = m_externalCameraController.get();
 			break;
 		case CAM_SIDEREAL:
-			m_activeCameraController = m_siderealCameraController.Get();
+			m_activeCameraController = m_siderealCameraController.get();
 			break;
 	}
 
@@ -389,6 +391,13 @@ void WorldView::Draw3D()
 	assert(Pi::player);
 	assert(!Pi::player->IsDead());
 	m_camera->Draw(m_renderer, GetCamType() == CAM_INTERNAL ? Pi::player : 0);
+
+	if (!Pi::DrawGUI) return;
+
+	// Draw 3D HUD
+	// Speed lines
+	if (Pi::AreSpeedLinesDisplayed())
+		m_speedLines->Render(m_renderer);
 }
 
 void WorldView::OnToggleLabels()
@@ -871,6 +880,19 @@ void WorldView::Update()
 	m_camera->Update();
 
 	UpdateProjectedObjects();
+
+	//speedlines need cam_frame for transform, so they
+	//must be updated here (or don't delete cam_frame so early...)
+	if (Pi::AreSpeedLinesDisplayed()) {
+		m_speedLines->Update(Pi::game->GetTimeStep());
+		const Frame *cam_frame = m_camera->GetCamFrame();
+		matrix4x4d trans;
+		Frame::GetFrameRenderTransform(Pi::player->GetFrame(), cam_frame, trans);
+
+		trans[12] = trans[13] = trans[14] = 0.0;
+		trans[15] = 1.0;
+		m_speedLines->SetTransform(trans);
+	}
 
 	// target object under the crosshairs. must be done after
 	// UpdateProjectedObjects() to be sure that m_projectedPos does not have
@@ -1592,7 +1614,7 @@ void WorldView::Draw()
 
 	glLineWidth(2.0f);
 
-	DrawImageIndicator(m_mouseDirIndicator, m_indicatorMousedir.Get(), yellow);
+	DrawImageIndicator(m_mouseDirIndicator, m_indicatorMousedir.get(), yellow);
 
 	// combat target indicator
 	DrawCombatTargetIndicator(m_combatTargetIndicator, m_targetLeadIndicator, red);

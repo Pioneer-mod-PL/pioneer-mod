@@ -83,7 +83,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>../../../src;../../src;../../../pioneer-thirdparty/win32/include;../../../../pioneer-thirdparty/win32/include;../../win32/include;../../include;../../../contrib;../../contrib</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,9 +104,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <ClCompile>
-      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile />
     <PostBuildEvent>
       <Command>xcopy "..\..\..\pioneer-thirdparty\win32\bin\*.dll" "$(TargetDir)\*.dll" /Y /C</Command>
     </PostBuildEvent>
@@ -122,9 +119,7 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <ClCompile>
-      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile />
     <PostBuildEvent>
       <Command>xcopy "..\..\..\pioneer-thirdparty\win32\bin\*.dll" "$(TargetDir)\*.dll" /Y /C</Command>
     </PostBuildEvent>
@@ -150,9 +145,9 @@
     <ClCompile Include="..\..\src\EnumStrings.cpp" />
     <ClCompile Include="..\..\src\enum_table.cpp" />
     <ClCompile Include="..\..\src\EquipType.cpp" />
+    <ClCompile Include="..\..\src\FaceGenManager.cpp" />
     <ClCompile Include="..\..\src\FaceVideoLink.cpp" />
     <ClCompile Include="..\..\src\Factions.cpp" />
-    <ClCompile Include="..\..\src\FileSelectorWidget.cpp" />
     <ClCompile Include="..\..\src\FileSourceZip.cpp" />
     <ClCompile Include="..\..\src\FileSystem.cpp" />
     <ClCompile Include="..\..\src\FontCache.cpp" />
@@ -161,7 +156,6 @@
     <ClCompile Include="..\..\src\GalacticView.cpp" />
     <ClCompile Include="..\..\src\Game.cpp" />
     <ClCompile Include="..\..\src\GameConfig.cpp" />
-    <ClCompile Include="..\..\src\GameMenuView.cpp" />
     <ClCompile Include="..\..\src\GeoPatch.cpp" />
     <ClCompile Include="..\..\src\GeoPatchContext.cpp" />
     <ClCompile Include="..\..\src\GeoPatchID.cpp" />
@@ -260,6 +254,7 @@
     <ClCompile Include="..\..\src\SpaceStation.cpp" />
     <ClCompile Include="..\..\src\SpaceStationType.cpp" />
     <ClCompile Include="..\..\src\SpaceStationView.cpp" />
+    <ClCompile Include="..\..\src\SpeedLines.cpp" />
     <ClCompile Include="..\..\src\Star.cpp" />
     <ClCompile Include="..\..\src\StationAdvertForm.cpp" />
     <ClCompile Include="..\..\src\StationBulletinBoardForm.cpp" />
@@ -313,10 +308,11 @@
     <ClInclude Include="..\..\src\DynamicBody.h" />
     <ClInclude Include="..\..\src\EnumStrings.h" />
     <ClInclude Include="..\..\src\enum_table.h" />
+    <ClInclude Include="..\..\src\EquipSet.h" />
     <ClInclude Include="..\..\src\EquipType.h" />
+    <ClInclude Include="..\..\src\FaceGenManager.h" />
     <ClInclude Include="..\..\src\FaceVideoLink.h" />
     <ClInclude Include="..\..\src\Factions.h" />
-    <ClInclude Include="..\..\src\FileSelectorWidget.h" />
     <ClInclude Include="..\..\src\FileSourceZip.h" />
     <ClInclude Include="..\..\src\FileSystem.h" />
     <ClInclude Include="..\..\src\fixed.h" />
@@ -328,7 +324,6 @@
     <ClInclude Include="..\..\src\Game.h" />
     <ClInclude Include="..\..\src\GameConfig.h" />
     <ClInclude Include="..\..\src\gameconsts.h" />
-    <ClInclude Include="..\..\src\GameMenuView.h" />
     <ClInclude Include="..\..\src\GeoPatch.h" />
     <ClInclude Include="..\..\src\GeoPatchContext.h" />
     <ClInclude Include="..\..\src\GeoPatchID.h" />
@@ -342,7 +337,6 @@
     <ClInclude Include="..\..\src\libs.h" />
     <ClInclude Include="..\..\src\Lua.h" />
     <ClInclude Include="..\..\src\LuaBody.h" />
-    <ClInclude Include="..\..\src\LuaCargoBody.h" />
     <ClInclude Include="..\..\src\LuaChatForm.h" />
     <ClInclude Include="..\..\src\LuaComms.h" />
     <ClInclude Include="..\..\src\LuaConsole.h" />
@@ -427,6 +421,7 @@
     <ClInclude Include="..\..\src\SpaceStation.h" />
     <ClInclude Include="..\..\src\SpaceStationType.h" />
     <ClInclude Include="..\..\src\SpaceStationView.h" />
+    <ClInclude Include="..\..\src\SpeedLines.h" />
     <ClInclude Include="..\..\src\Star.h" />
     <ClInclude Include="..\..\src\StationAdvertForm.h" />
     <ClInclude Include="..\..\src\StationBulletinBoardForm.h" />
@@ -455,9 +450,6 @@
     <ClInclude Include="..\..\src\win32\TextUtils.h" />
     <ClInclude Include="..\..\src\win32\WinMath.h" />
     <ClInclude Include="..\..\src\WorldView.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\Makefile.am" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\win32\pioneer.rc" />

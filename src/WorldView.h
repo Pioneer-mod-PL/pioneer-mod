@@ -9,6 +9,7 @@
 #include "gui/GuiWidget.h"
 #include "View.h"
 #include "Serializer.h"
+#include "SpeedLines.h"
 #include "Background.h"
 #include "EquipType.h"
 #include "CameraController.h"
@@ -114,6 +115,7 @@ private:
 	void MouseWheel(bool up);
 
 	NavTunnelWidget *m_navTunnel;
+	std::unique_ptr<SpeedLines> m_speedLines;
 
 	Gui::ImageButton *m_hyperspaceButton;
 
@@ -150,10 +152,10 @@ private:
 	Gui::LabelSet *m_bodyLabels;
 	std::map<Body*,vector3d> m_projectedPos;
 
-	ScopedPtr<Camera> m_camera;
-	ScopedPtr<InternalCameraController> m_internalCameraController;
-	ScopedPtr<ExternalCameraController> m_externalCameraController;
-	ScopedPtr<SiderealCameraController> m_siderealCameraController;
+	std::unique_ptr<Camera> m_camera;
+	std::unique_ptr<InternalCameraController> m_internalCameraController;
+	std::unique_ptr<ExternalCameraController> m_externalCameraController;
+	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
 	CameraController *m_activeCameraController; //one of the above
 
 	Indicator m_velIndicator;
@@ -163,7 +165,7 @@ private:
 	Indicator m_targetLeadIndicator;
 	Indicator m_mouseDirIndicator;
 
-	ScopedPtr<Gui::TexturedQuad> m_indicatorMousedir;
+	std::unique_ptr<Gui::TexturedQuad> m_indicatorMousedir;
 	vector2f m_indicatorMousedirSize;
 };
 
