@@ -2,7 +2,9 @@
 -- Licensed under the terms of CC-BY-SA 3.0. See licenses/CC-BY-SA-3.0.txt
 
 define_ship {
-	name = 'MINER Frachtowiec Górniczy',
+	name = 'Frachtowiec górniczy Miner',
+	ship_class='medium_freighter',
+	manufacturer='haber',
 	model = 'dsminer',
 	forward_thrust = 90e6,
 	reverse_thrust = 50e6,
