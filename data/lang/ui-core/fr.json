@@ -175,6 +175,18 @@
       "description" : "",
       "message" : "V_delta"
    },
+   "DELTA_V_EMPTY" : {
+      "description" : "Delta-v capacity of a ship with no cargo or upgrades",
+      "message" : "Delta-v (empty)"
+   },
+   "DELTA_V_FULL" : {
+      "description" : "Delta-v capacity of a ship with maximum cargo",
+      "message" : "Delta-v (full)"
+   },
+   "DELTA_V_MAX" : {
+      "description" : "Delta-v capacity of a ship with cargo bay fully loaded with propellant",
+      "message" : "Delta-v (max)"
+   },
    "DESCENT_TO_GROUND_SPEED" : {
       "description" : "",
       "message" : "Vitesse de descente"
@@ -233,7 +245,7 @@
    },
    "ENGINEERING" : {
       "description" : "",
-      "message" : "Ingénierie"
+      "message" : "Engineering:"
    },
    "EQUIPMENT" : {
       "description" : "",
@@ -369,7 +381,7 @@
    },
    "HULL_REPAIR_ATTEMPT_FAILED_HULL_SUFFERED_MINOR_DAMAGE" : {
       "description" : "",
-      "message" : "Reparation coque annulée. Degats trop mineurs"
+      "message" : "Réparation échouée. La coque a reçu des dégâts mineurs."
    },
    "HYPERDRIVE" : {
       "description" : "",
@@ -397,11 +409,11 @@
    },
    "IN_CARGO_HOLD" : {
       "description" : "",
-      "message" : "In cargo hold"
+      "message" : "En soute"
    },
    "IN_STOCK" : {
       "description" : "",
-      "message" : "In stock"
+      "message" : "En stock"
    },
    "ITEM_IS_OUT_OF_STOCK" : {
       "description" : "",
@@ -575,8 +587,12 @@
       "description" : "",
       "message" : "Bloquer"
    },
-   "NAME" : {
-      "description" : "",
+   "NAME_OBJECT" : {
+      "description" : "For an item or object",
+      "message" : "Nom"
+   },
+   "NAME_PERSON" : {
+      "description" : "For a person",
       "message" : "Nom"
    },
    "NAVIGATION" : {
@@ -725,7 +741,7 @@
    },
    "REPAIR_X_HULL_DAMAGE_FOR_X" : {
       "description" : "",
-      "message" : "Repair {damage}% hull damage for {price}"
+      "message" : "Réparer {damage}% de dégâts de la coque pour {price}"
    },
    "REQUEST_LAUNCH" : {
       "description" : "",
@@ -797,7 +813,7 @@
    },
    "SHIP_VIEWING_WAS_SOLD" : {
       "description" : "",
-      "message" : "The ship you were viewing has been sold"
+      "message" : "Le vaisseau que vous observiez a été vendu"
    },
    "SOUND" : {
       "description" : "",
@@ -833,7 +849,7 @@
    },
    "THE_SHIP_IS_UNDER_STATION_CONTROL_COMMANDER" : {
       "description" : "",
-      "message" : "Le vaisseaux est sous le controle de la station, Commandant."
+      "message" : "Le vaisseau est sous le contrôle de la station, Commandant."
    },
    "TOGGLE_MALE_FEMALE" : {
       "description" : "",
@@ -845,7 +861,7 @@
    },
    "TOTAL_MASS" : {
       "description" : "",
-      "message" : "Total mass"
+      "message" : "Masse totale"
    },
    "TRADING_ILLEGAL_GOODS" : {
       "description" : "",
