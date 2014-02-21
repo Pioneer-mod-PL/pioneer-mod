@@ -14,6 +14,7 @@
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/VertexArray.h"
+#include "MathUtil.h"
 #include "vcacheopt/vcacheopt.h"
 #include <deque>
 #include <algorithm>
@@ -29,7 +30,7 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 	heights(nullptr), normals(nullptr), colors(nullptr),
 	m_vbo(0), parent(nullptr), geosphere(gs),
 	m_depth(depth), mPatchID(ID_),
-	mHasJobRequest(false)
+	m_job(nullptr), mHasJobRequest(false)
 {
 	for (int i=0; i<NUM_KIDS; ++i) {
 		edgeFriend[i]	= NULL;
@@ -43,7 +44,7 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 	clipRadius = std::max(clipRadius, (v2-clipCentroid).Length());
 	clipRadius = std::max(clipRadius, (v3-clipCentroid).Length());
 	double distMult;
-	if (geosphere->m_sbody->type < SystemBody::TYPE_PLANET_ASTEROID) {
+	if (geosphere->m_sbody->GetType() < SystemBody::TYPE_PLANET_ASTEROID) {
  		distMult = 10.0 / Clamp(depth, 1, 10);
  	} else {
  		distMult = 5.0 / Clamp(depth, 1, 5);
@@ -54,6 +55,10 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 
 GeoPatch::~GeoPatch() {
 	mHasJobRequest = false;
+	if (m_job) {
+		Pi::Jobs()->Cancel(m_job);
+		m_job = nullptr;
+	}
 
 	for (int i=0; i<NUM_KIDS; i++) {
 		if (edgeFriend[i]) edgeFriend[i]->NotifyEdgeFriendDeleted(this);
@@ -73,16 +78,16 @@ void GeoPatch::_UpdateVBOs() {
 		if (!m_vbo) glGenBuffersARB(1, &m_vbo);
 		glBindBufferARB(GL_ARRAY_BUFFER, m_vbo);
 		glBufferDataARB(GL_ARRAY_BUFFER, sizeof(GeoPatchContext::VBOVertex)*ctx->NUMVERTICES(), 0, GL_DYNAMIC_DRAW);
-		double xfrac=0.0, yfrac=0.0;
-		double *pHts = heights.get();
+		const Sint32 edgeLen = ctx->edgeLen;
+		const double frac = ctx->frac;
+		const double *pHts = heights.get();
 		const vector3f *pNorm = normals.get();
 		const Color3ub *pColr = colors.get();
 		GeoPatchContext::VBOVertex *pData = ctx->vbotemp;
-		for (int y=0; y<ctx->edgeLen; y++) {
-			xfrac = 0.0;
-			for (int x=0; x<ctx->edgeLen; x++) {
+		for (Sint32 y=0; y<edgeLen; y++) {
+			for (Sint32 x=0; x<edgeLen; x++) {
 				const double height = *pHts;
-				const vector3d p = (GetSpherePoint(xfrac, yfrac) * (height + 1.0)) - clipCentroid;
+				const vector3d p = (GetSpherePoint(x*frac, y*frac) * (height + 1.0)) - clipCentroid;
 				clipRadius = std::max(clipRadius, p.Length());
 				pData->x = float(p.x);
 				pData->y = float(p.y);
@@ -101,10 +106,7 @@ void GeoPatch::_UpdateVBOs() {
 				++pColr; // next colour
 
 				++pData; // next vertex
-
-				xfrac += ctx->frac;
 			}
-			yfrac += ctx->frac;
 		}
 		glBufferDataARB(GL_ARRAY_BUFFER, sizeof(GeoPatchContext::VBOVertex)*ctx->NUMVERTICES(), ctx->vbotemp, GL_DYNAMIC_DRAW);
 		glBindBufferARB(GL_ARRAY_BUFFER, 0);
@@ -166,12 +168,13 @@ void GeoPatch::LODUpdate(const vector3d &campos) {
 	if (canSplit) {
 		if (!kids[0]) {
             assert(!mHasJobRequest);
+            assert(!m_job);
 			mHasJobRequest = true;
 
 			SQuadSplitRequest *ssrd = new SQuadSplitRequest(v0, v1, v2, v3, centroid.Normalized(), m_depth,
-						geosphere->m_sbody->path, mPatchID, ctx->edgeLen,
+						geosphere->m_sbody->GetPath(), mPatchID, ctx->edgeLen,
 						ctx->frac, geosphere->m_terrain.Get());
-			Pi::Jobs()->Queue(new QuadPatchJob(ssrd));
+			Pi::Jobs()->Queue(m_job = new QuadPatchJob(this, ssrd));
 		} else {
 			for (int i=0; i<NUM_KIDS; i++) {
 				kids[i]->LODUpdate(campos);
@@ -193,10 +196,11 @@ void GeoPatch::RequestSinglePatch()
 {
 	if( !heights ) {
         assert(!mHasJobRequest);
+        assert(!m_job);
 		mHasJobRequest = true;
 		SSingleSplitRequest *ssrd = new SSingleSplitRequest(v0, v1, v2, v3, centroid.Normalized(), m_depth,
-					geosphere->m_sbody->path, mPatchID, ctx->edgeLen, ctx->frac, geosphere->m_terrain.Get());
-		Pi::Jobs()->Queue(new SinglePatchJob(ssrd));
+					geosphere->m_sbody->GetPath(), mPatchID, ctx->edgeLen, ctx->frac, geosphere->m_terrain.Get());
+		Pi::Jobs()->Queue(m_job = new SinglePatchJob(this, ssrd));
 	}
 }
 
@@ -205,7 +209,7 @@ void GeoPatch::ReceiveHeightmaps(SQuadSplitResult *psr)
 	assert(NULL!=psr);
 	if (m_depth<psr->depth()) {
 		// this should work because each depth should have a common history
-		const uint32_t kidIdx = psr->data(0).patchID.GetPatchIdx(m_depth+1);
+		const Uint32 kidIdx = psr->data(0).patchID.GetPatchIdx(m_depth+1);
 		if( kids[kidIdx] ) {
 			kids[kidIdx]->ReceiveHeightmaps(psr);
 		} else {

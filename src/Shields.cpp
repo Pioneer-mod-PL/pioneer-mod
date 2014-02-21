@@ -1,4 +1,4 @@
-// Copyright © 2008-2013 Pioneer Developers. See AUTHORS.txt for details
+// Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Shields.h"
@@ -22,9 +22,37 @@ namespace {
 	}
 };
 
+//used to find the accumulated transform of a MatrixTransform
+class MatrixAccumVisitor : public SceneGraph::NodeVisitor {
+public:
+	MatrixAccumVisitor(const std::string &name_)
+		: outMat(matrix4x4f::Identity())
+		, m_accumMat(matrix4x4f::Identity())
+		, m_name(name_)
+	{
+	}
+
+	virtual void ApplyMatrixTransform(SceneGraph::MatrixTransform &mt) override {
+		if (mt.GetName() == m_name) {
+			outMat = m_accumMat * mt.GetTransform();
+		} else {
+			const matrix4x4f prevAcc = m_accumMat;
+			m_accumMat = m_accumMat * mt.GetTransform();
+			mt.Traverse(*this);
+			m_accumMat = prevAcc;
+		}
+	}
+
+	matrix4x4f outMat;
+
+private:
+	matrix4x4f m_accumMat;
+	std::string m_name;
+};
+
 typedef std::vector<Shields::Shield>::iterator ShieldIterator;
 
-//static 
+//static
 bool Shields::s_initialised = false;
 
 Shields::Shield::Shield(Color3ub _colour, const matrix4x4f &matrix, SceneGraph::StaticGeometry *_sg)
@@ -38,12 +66,11 @@ Shields::Hits::Hits(const vector3d& _pos, const Uint32 _start, const Uint32 _end
 void Shields::Init(Graphics::Renderer *renderer)
 {
 	assert(!s_initialised);
-	
+
 	// create our global shield material
 	Graphics::MaterialDescriptor desc;
 	desc.textures = 0;
 	desc.lighting = true;
-	desc.twoSided = false;
 	desc.alphaTest = false;
 	desc.effect = Graphics::EffectType::EFFECT_SHIELD;
 	s_matShield.Reset(renderer->CreateMaterial(desc));
@@ -89,7 +116,6 @@ void Shields::ReparentShieldNodes(SceneGraph::Model* model)
 					RefCountedPtr<StaticGeometry> sg(dynamic_cast<StaticGeometry*>(node));
 					assert(sg.Valid());
 					sg->SetNodeMask(SceneGraph::NODE_TRANSPARENT);
-					sg->DisableDepthWrite();
 
 					// We can early-out if we've already processed this models scenegraph.
 					if (Graphics::BLEND_ALPHA == sg->m_blendMode) {
@@ -99,24 +125,22 @@ void Shields::ReparentShieldNodes(SceneGraph::Model* model)
 					// force the blend mode
 					sg->m_blendMode = Graphics::BLEND_ALPHA;
 
-					for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
-						RefCountedPtr<Graphics::StaticMesh> rMesh = sg->GetMesh(iMesh);
+					Graphics::RenderStateDesc rsd;
+					rsd.blendMode = Graphics::BLEND_ALPHA;
+					rsd.depthWrite = false;
+					sg->SetRenderState(renderer->CreateRenderState(rsd));
 
-						for (Sint32 surfIdx = 0, endSurf = rMesh->GetNumSurfaces(); surfIdx < endSurf; surfIdx++) {
-							RefCountedPtr<Graphics::Surface> surf = rMesh->GetSurface(surfIdx);
-							if (surf.Valid()) {
-								surf->SetMaterial(GetGlobalShieldMaterial());
-							}
-						}
+					for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
+						StaticGeometry::Mesh &rMesh = sg->GetMeshAt(iMesh);
+						rMesh.material = GetGlobalShieldMaterial();
 					}
 
 					// find the accumulated transform from the root to our node
-					matrix4x4f accum(matrix4x4f::Identity());
-					matrix4x4f outMat(matrix4x4f::Identity());
-					model->GetRoot()->GatherTransforms(mt->GetName(), accum, outMat);
+					MatrixAccumVisitor mav(mt->GetName());
+					model->GetRoot()->Accept(mav);
 
 					// set our nodes transformation to be the accumulated transform
-					MatrixTransform *sg_transform_parent = new MatrixTransform(renderer, outMat);
+					MatrixTransform *sg_transform_parent = new MatrixTransform(renderer, mav.outMat);
 					std::stringstream nodeStream;
 					nodeStream << iChild << s_matrixTransformName;
 					sg_transform_parent->SetName(nodeStream.str());
@@ -129,7 +153,7 @@ void Shields::ReparentShieldNodes(SceneGraph::Model* model)
 					shieldGroup->AddChild(sg_transform_parent);
 				}
 			}
-			
+
 			model->GetRoot()->AddChild(shieldGroup);
 		}
 	}
@@ -161,7 +185,7 @@ Shields::Shields(SceneGraph::Model *model)
 	for (unsigned int i=0; i < results.size(); i++) {
 		MatrixTransform *mt = dynamic_cast<MatrixTransform*>(results.at(i));
 		assert(mt);
-		
+
 
 		for(Uint32 iChild=0 ; iChild<mt->GetNumChildren() ; ++iChild) {
 			Node* node = mt->GetChildAt(iChild);
@@ -170,6 +194,18 @@ Shields::Shields(SceneGraph::Model *model)
 				RefCountedPtr<StaticGeometry> sg(dynamic_cast<StaticGeometry*>(node));
 				assert(sg.Valid());
 				sg->SetNodeMask(SceneGraph::NODE_TRANSPARENT);
+
+				Graphics::RenderStateDesc rsd;
+				rsd.blendMode = Graphics::BLEND_ALPHA;
+				rsd.depthWrite = false;
+				sg->SetRenderState(sg->GetRenderer()->CreateRenderState(rsd));
+
+				// set the material
+				for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
+					StaticGeometry::Mesh &rMesh = sg->GetMeshAt(iMesh);
+					rMesh.material = GetGlobalShieldMaterial();
+				}
+
 				m_shields.push_back(Shield(Color3ub(255), mt->GetTransform(), sg.Get()));
 			}
 		}
@@ -239,7 +275,7 @@ void Shields::Update(const float coolDown, const float shieldStrength)
 	if (shieldStrength>0.0f) {
 		s_renderParams.strength = shieldStrength;
 		s_renderParams.coolDown = coolDown;
-		
+
 		Uint32 numHits = m_hits.size();
 		for (Uint32 i = 0; i<numHits && i<ShieldRenderParameters::MAX_SHIELD_HITS;  ++i) {
 			const  Hits &hit = m_hits[i];
@@ -260,8 +296,7 @@ void Shields::Update(const float coolDown, const float shieldStrength)
 	for (ShieldIterator it = m_shields.begin(); it != m_shields.end(); ++it) {
 		if (shieldStrength>0.0f) {
 			it->m_mesh->SetNodeMask(SceneGraph::NODE_TRANSPARENT);
-			it->m_mesh->DisableDepthWrite();
-			
+
 			GetGlobalShieldMaterial()->specialParameter0 = &s_renderParams;
 		} else {
 			it->m_mesh->SetNodeMask(0x0);

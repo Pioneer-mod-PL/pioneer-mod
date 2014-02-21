@@ -29,6 +29,7 @@ extern const struct EnumItem ENUM_EconType[];
 extern const struct EnumItem ENUM_BodyType[];
 extern const struct EnumItem ENUM_BodySuperType[];
 extern const struct EnumItem ENUM_GameUIFaceFlags[];
+extern const struct EnumItem ENUM_ModelDebugFlags[];
 extern const struct EnumItem ENUM_UIAlignDirection[];
 extern const struct EnumItem ENUM_UIEventType[];
 extern const struct EnumItem ENUM_UIKeyboardAction[];
@@ -42,6 +43,7 @@ extern const struct EnumItem ENUM_UIGradientDirection[];
 extern const struct EnumItem ENUM_UIMarginDirection[];
 extern const struct EnumItem ENUM_UINumberLabelFormat[];
 extern const struct EnumItem ENUM_UITableRowAlignDirection[];
+extern const struct EnumItem ENUM_UITableColumnAlignDirection[];
 extern const struct EnumItem ENUM_UISizeControl[];
 extern const struct EnumItem ENUM_UIFont[];
 

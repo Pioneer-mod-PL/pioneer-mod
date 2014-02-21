@@ -1,3 +1,6 @@
+-- Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
+-- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+
 local f = Faction:new('Federacja')
 	:description_short('Historyczna kolebka ludzkości')
 	:description([[Słońce jest dobrem wspólnym]])

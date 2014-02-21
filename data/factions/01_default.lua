@@ -1,3 +1,6 @@
+-- Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
+-- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+
 local f = Faction:new('Niepodległe')
 	:description_short('Świat bez zbiorowego poddaństwa')
 	:description('Wolny i niepodległy świat, autonomia i wzajemne zaufanie lub też walka o nie.')

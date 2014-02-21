@@ -8,6 +8,7 @@
 #include "perlin.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RenderState.h"
 #include "graphics/Graphics.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
@@ -24,16 +25,20 @@ static const Graphics::AttributeSet RING_VERTEX_ATTRIBS
 	= Graphics::ATTRIB_POSITION
 	| Graphics::ATTRIB_UV0;
 
-Planet::Planet(): TerrainBody(), m_ringVertices(RING_VERTEX_ATTRIBS)
+Planet::Planet()
+	: TerrainBody()
+	, m_ringVertices(RING_VERTEX_ATTRIBS)
+	, m_ringState(nullptr)
 {
 }
 
-Planet::Planet(SystemBody *sbody): TerrainBody(sbody), m_ringVertices(RING_VERTEX_ATTRIBS)
+Planet::Planet(SystemBody *sbody)
+	: TerrainBody(sbody)
+	, m_ringVertices(RING_VERTEX_ATTRIBS)
+	, m_ringState(nullptr)
 {
 	InitParams(sbody);
 }
-
-Planet::~Planet() {}
 
 void Planet::Load(Serializer::Reader &rd, Space *space)
 {
@@ -62,7 +67,7 @@ void Planet::InitParams(const SystemBody *sbody)
 	// surface gravity = -G*M/planet radius^2
 	m_surfaceGravity_g = -G*sbody->GetMass()/(sbody->GetRadius()*sbody->GetRadius());
 	const double lapseRate_L = -m_surfaceGravity_g/specificHeatCp; // negative deg/m
-	const double surfaceTemperature_T0 = sbody->averageTemp; //K
+	const double surfaceTemperature_T0 = sbody->GetAverageTemp(); //K
 
 	double surfaceDensity, h; Color c;
 	sbody->GetAtmosphereFlavor(&c, &surfaceDensity);// kg / m^3
@@ -84,7 +89,7 @@ void Planet::InitParams(const SystemBody *sbody)
 
 	SetPhysRadius(std::max(m_atmosphereRadius, GetMaxFeatureRadius()+1000));
 	if (sbody->HasRings()) {
-		SetClipRadius(sbody->GetRadius() * sbody->m_rings.maxRadius.ToDouble());
+		SetClipRadius(sbody->GetRadius() * sbody->GetRings().maxRadius.ToDouble());
 	} else {
 		SetClipRadius(GetPhysRadius());
 	}
@@ -106,7 +111,7 @@ void Planet::GetAtmosphericState(double dist, double *outPressure, double *outDe
 		for (double h = -1000; h <= 100000; h = h+1000.0) {
 			double p = 0.0, d = 0.0;
 			GetAtmosphericState(h+this->GetSystemBody()->GetRadius(),&p,&d);
-			printf("height(m): %f, pressure(hpa): %f, density: %f\n", h, p*101325.0/100.0, d);
+			Output("height(m): %f, pressure(hpa): %f, density: %f\n", h, p*101325.0/100.0, d);
 		}
 	}
 #endif
@@ -136,7 +141,7 @@ void Planet::GetAtmosphericState(double dist, double *outPressure, double *outDe
 	const double lapseRate_L = -m_surfaceGravity_g/specificHeatCp; // negative deg/m
 
 	const double height_h = (dist-sbody->GetRadius()); // height in m
-	const double surfaceTemperature_T0 = sbody->averageTemp; //K
+	const double surfaceTemperature_T0 = sbody->GetAverageTemp(); //K
 
 	Color c;
 	sbody->GetAtmosphereFlavor(&c, &surfaceDensity);// kg / m^3
@@ -165,8 +170,8 @@ void Planet::GenerateRings(Graphics::Renderer *renderer)
 	m_ringVertices.Clear();
 
 	// generate the ring geometry
-	const float inner = sbody->m_rings.minRadius.ToFloat();
-	const float outer = sbody->m_rings.maxRadius.ToFloat();
+	const float inner = sbody->GetRings().minRadius.ToFloat();
+	const float outer = sbody->GetRings().maxRadius.ToFloat();
 	int segments = 200;
 	for (int i = 0; i <= segments; ++i) {
 		const float a = (2.0f*float(M_PI)) * (float(i) / float(segments));
@@ -187,8 +192,8 @@ void Planet::GenerateRings(Graphics::Renderer *renderer)
 
 	const float ringScale = (outer-inner)*sbody->GetRadius() / 1.5e7f;
 
-	Random rng(GetSystemBody()->seed+4609837);
-	Color baseCol = sbody->m_rings.baseColor;
+	Random rng(GetSystemBody()->GetSeed()+4609837);
+	Color baseCol = sbody->GetRings().baseColor;
 	double noiseOffset = 2048.0 * rng.Double();
 	for (int i = 0; i < RING_TEXTURE_LENGTH; ++i) {
 		const float alpha = (float(i) / float(RING_TEXTURE_LENGTH)) * ringScale;
@@ -232,112 +237,25 @@ void Planet::GenerateRings(Graphics::Renderer *renderer)
 	Graphics::MaterialDescriptor desc;
 	desc.effect = Graphics::EFFECT_PLANETRING;
 	desc.lighting = true;
-	desc.twoSided = true;
 	desc.textures = 1;
 	m_ringMaterial.reset(renderer->CreateMaterial(desc));
 	m_ringMaterial->texture0 = m_ringTexture.Get();
+
+	Graphics::RenderStateDesc rsd;
+	rsd.blendMode = Graphics::BLEND_ALPHA_PREMULT;
+	rsd.cullMode = Graphics::CULL_NONE;
+	m_ringState = renderer->CreateRenderState(rsd);
 }
 
 void Planet::DrawGasGiantRings(Renderer *renderer, const matrix4x4d &modelView)
 {
-	renderer->SetBlendMode(BLEND_ALPHA_PREMULT);
-	renderer->SetDepthTest(true);
+	assert(GetSystemBody()->HasRings());
 
 	if (!m_ringTexture)
 		GenerateRings(renderer);
 
-	const SystemBody *sbody = GetSystemBody();
-	assert(sbody->HasRings());
-
 	renderer->SetTransform(modelView);
-
-	renderer->DrawTriangles(&m_ringVertices, m_ringMaterial.get(), TRIANGLE_STRIP);
-
-	renderer->SetBlendMode(BLEND_SOLID);
-}
-
-void Planet::DrawAtmosphere(Renderer *renderer, const matrix4x4d &modelView, const vector3d &camPos)
-{
-	PROFILE_SCOPED()
-	//this is the non-shadered atmosphere rendering
-	Color col;
-	double density;
-	GetSystemBody()->GetAtmosphereFlavor(&col, &density);
-
-	const double rad1 = 0.999;
-	const double rad2 = 1.05;
-
-	// face the camera dammit
-	vector3d zaxis = (-camPos).Normalized();
-	vector3d xaxis = vector3d(0,1,0).Cross(zaxis).Normalized();
-	vector3d yaxis = zaxis.Cross(xaxis);
-	matrix4x4d rot = matrix4x4d::MakeInvRotMatrix(xaxis, yaxis, zaxis);
-	const matrix4x4d trans = modelView * rot;
-
-	matrix4x4d invViewRot = trans;
-	invViewRot.ClearToRotOnly();
-	invViewRot = invViewRot.InverseOf();
-
-	// XXX used to be Pi::worldView->GetNumLights, but that always returns 1
-	const int numLights = 1;
-	assert(numLights < 4);
-	vector3d lightDir[4];
-	float lightCol[4][4];
-	// only
-	for (int i=0; i<numLights; i++) {
-		float temp[4];
-		glGetLightfv(GL_LIGHT0 + i, GL_DIFFUSE, lightCol[i]);
-		glGetLightfv(GL_LIGHT0 + i, GL_POSITION, temp);
-		lightDir[i] = (invViewRot * vector3d(temp[0], temp[1], temp[2])).Normalized();
-	}
-
-	const double angStep = M_PI/32;
-	// find angle player -> centre -> tangent point
-	// tangent is from player to surface of sphere
-	float tanAng = float(acos(rad1 / camPos.Length()));
-
-	// then we can put the fucking atmosphere on the horizon
-	vector3d r1(0.0, 0.0, rad1);
-	vector3d r2(0.0, 0.0, rad2);
-	rot = matrix4x4d::RotateYMatrix(tanAng);
-	r1 = rot * r1;
-	r2 = rot * r2;
-
-	rot = matrix4x4d::RotateZMatrix(angStep);
-
-	if (!m_atmosphereVertices) {
-		m_atmosphereVertices.reset(new Graphics::VertexArray(ATTRIB_POSITION | ATTRIB_DIFFUSE | ATTRIB_NORMAL));
-		Graphics::MaterialDescriptor desc;
-		desc.vertexColors = true;
-		desc.twoSided = true;
-		m_atmosphereMaterial.reset(renderer->CreateMaterial(desc));
-	}
-
-	VertexArray &vts = *m_atmosphereVertices;
-	vts.Clear();
-
-	for (float ang=0; ang<2*M_PI; ang+=float(angStep)) {
-		const vector3d norm = r1.Normalized();
-		const vector3f n = vector3f(norm.x, norm.y, norm.z);
-		float _col[4] = { 0,0,0,0 };
-		for (int lnum=0; lnum<numLights; lnum++) {
-			const float dot = norm.x*lightDir[lnum].x + norm.y*lightDir[lnum].y + norm.z*lightDir[lnum].z;
-			_col[0] += dot*lightCol[lnum][0];
-			_col[1] += dot*lightCol[lnum][1];
-			_col[2] += dot*lightCol[lnum][2];
-		}
-		for (int i=0; i<3; i++) _col[i] = _col[i] * col[i];
-		_col[3] = col[3];
-		vts.Add(vector3f(r1.x, r1.y, r1.z), Color(_col[0], _col[1], _col[2], _col[3]), n);
-		vts.Add(vector3f(r2.x, r2.y, r2.z), Color(0), n);
-		r1 = rot * r1;
-		r2 = rot * r2;
-	}
-
-	renderer->SetTransform(trans);
-	renderer->SetBlendMode(BLEND_ALPHA_ONE);
-	renderer->DrawTriangles(m_atmosphereVertices.get(), m_atmosphereMaterial.get(), TRIANGLE_STRIP);
-	renderer->SetBlendMode(BLEND_SOLID);
+	renderer->DrawTriangles(&m_ringVertices, m_ringState, m_ringMaterial.get(), TRIANGLE_STRIP);
 }
 
 void Planet::SubRender(Renderer *r, const matrix4x4d &viewTran, const vector3d &camPos)

@@ -198,6 +198,7 @@ static void LaunchShip(Ship *ship)
 
 bool AICmdKamikaze::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!m_target || m_target->IsDead()) return true;
 
 	if (m_ship->GetFlightState() == Ship::FLYING) m_ship->SetWheelState(false);
@@ -235,6 +236,7 @@ bool AICmdKamikaze::TimeStepUpdate()
 
 bool AICmdKill::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!ProcessChild()) return false;
 	if (!m_target || m_target->IsDead()) return true;
 
@@ -252,7 +254,7 @@ bool AICmdKill::TimeStepUpdate()
 	vector3d leaddir = m_ship->AIGetLeadDir(m_target, targaccel, 0);
 
 	if (targpos.Length() >= VICINITY_MIN+1000.0) {	// if really far from target, intercept
-//		printf("%s started AUTOPILOT\n", m_ship->GetLabel().c_str());
+//		Output("%s started AUTOPILOT\n", m_ship->GetLabel().c_str());
 		m_child = new AICmdFlyTo(m_ship, m_target);
 		ProcessChild(); return false;
 	}
@@ -699,6 +701,7 @@ AICmdFlyTo::AICmdFlyTo(Ship *ship, Frame *targframe, const vector3d &posoff, dou
 
 bool AICmdFlyTo::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!m_target && !m_targframe) return true;			// deleted object
 
 	// sort out gear, launching
@@ -725,7 +728,7 @@ bool AICmdFlyTo::TimeStepUpdate()
 
 #ifdef DEBUG_AUTOPILOT
 if (m_ship->IsType(Object::PLAYER))
-printf("Autopilot dist = %.1f, speed = %.1f, zthrust = %.2f, state = %i\n",
+Output("Autopilot dist = %.1f, speed = %.1f, zthrust = %.2f, state = %i\n",
 	targdist, relvel.Length(), m_ship->GetThrusterState().z, m_state);
 #endif
 
@@ -870,6 +873,7 @@ AICmdDock::AICmdDock(Ship *ship, SpaceStation *target) : AICommand(ship, CMD_DOC
 
 bool AICmdDock::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!ProcessChild()) return false;
 	if (!m_target) return true;
 	if (m_state == eDockFlyToStart) IncrementState();				// finished moving into dock start pos
@@ -965,7 +969,7 @@ bool AICmdDock::TimeStepUpdate()
 	}
 
 #ifdef DEBUG_AUTOPILOT
-printf("AICmdDock dist = %.1f, speed = %.1f, ythrust = %.2f, state = %i\n",
+Output("AICmdDock dist = %.1f, speed = %.1f, ythrust = %.2f, state = %i\n",
 	targdist, relvel.Length(), m_ship->GetThrusterState().y, m_state);
 #endif
 
@@ -1021,6 +1025,7 @@ double AICmdFlyAround::MaxVel(double targdist, double targalt)
 
 bool AICmdFlyAround::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!ProcessChild()) return false;
 
 	// Not necessary unless it's a tier 1 AI
@@ -1098,6 +1103,7 @@ AICmdFormation::AICmdFormation(Ship *ship, Ship *target, const vector3d &posoff)
 
 bool AICmdFormation::TimeStepUpdate()
 {
+	if (m_ship->GetFlightState() == Ship::JUMPING) return false;
 	if (!m_target) return true;
 	if (!ProcessChild()) return false;		// In case we're doing an intercept
 

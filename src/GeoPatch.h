@@ -18,7 +18,6 @@
 
 namespace Graphics { class Renderer; class Frustum; }
 class SystemBody;
-class GeoPatch;
 class GeoPatchContext;
 class GeoSphere;
 class BasePatchJob;
@@ -47,6 +46,7 @@ public:
 	bool m_needUpdateVBOs;
 
 	const GeoPatchID mPatchID;
+	BasePatchJob* m_job;
 	bool mHasJobRequest;
 
 	GeoPatch(const RefCountedPtr<GeoPatchContext> &_ctx, GeoSphere *gs,

@@ -7,11 +7,11 @@
 #include "libs.h"
 #include "galaxy/SystemPath.h"
 #include "graphics/Texture.h"
+#include "graphics/RenderState.h"
 #include "Random.h"
 
 namespace Graphics {
 	class Renderer;
-	class StaticMesh;
 	class Material;
 }
 
@@ -37,13 +37,13 @@ namespace Background
 		UniverseBox(Graphics::Renderer *r);
 		~UniverseBox();
 
-		void Draw();
+		void Draw(Graphics::RenderState*);
 		void LoadCubeMap(Random &rand);
 
 	private:
 		void Init();
 
-		std::unique_ptr<Graphics::StaticMesh> m_model;
+		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
 		std::unique_ptr<Graphics::Texture> m_cubemap;
 
 		Uint32 m_numCubemaps;
@@ -54,31 +54,31 @@ namespace Background
 	public:
 		//does not Fill the starfield
 		Starfield(Graphics::Renderer *r, Random &rand);
-		void Draw();
+		void Draw(Graphics::RenderState*);
 		//create or recreate the starfield
 		void Fill(Random &rand);
 
 	private:
 		void Init();
 		static const int BG_STAR_MAX = 10000;
-		std::unique_ptr<Graphics::StaticMesh> m_model;
+		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
 
 		//hyperspace animation vertex data
-		vector3f m_hyperVtx[BG_STAR_MAX*2];
-		Color m_hyperCol[BG_STAR_MAX*2];
+		vector3f m_hyperVtx[BG_STAR_MAX*3];
+		Color m_hyperCol[BG_STAR_MAX*3];
 	};
 
 	class MilkyWay : public BackgroundElement
 	{
 	public:
 		MilkyWay(Graphics::Renderer*);
-		void Draw();
+		void Draw(Graphics::RenderState*);
 
 	private:
-		std::unique_ptr<Graphics::StaticMesh> m_model;
+		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
 	};
 
-	
+
 
 	// contains starfield, milkyway, possibly other Background elements
 	class Container
@@ -104,6 +104,7 @@ namespace Background
 		Starfield m_starField;
 		UniverseBox m_universeBox;
 		Uint32 m_drawFlags;
+		Graphics::RenderState *m_renderState;
 	};
 
 } //namespace Background

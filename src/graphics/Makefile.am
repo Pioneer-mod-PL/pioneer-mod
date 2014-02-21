@@ -17,15 +17,18 @@ noinst_HEADERS = \
 	Frustum.h \
 	Light.h \
 	Material.h \
-	StaticMesh.h \
-	Surface.h \
+	RenderState.h \
 	VertexArray.h \
 	Texture.h \
 	TextureGL.h \
 	TextureBuilder.h \
 	Drawables.h \
+	Types.h \
+	VertexBuffer.h \
 	gl2/GL2Material.h \
+	gl2/GL2RenderState.h \
 	gl2/GL2RenderTarget.h \
+	gl2/GL2VertexBuffer.h \
 	gl2/FresnelColourMaterial.h \
 	gl2/GeoSphereMaterial.h \
 	gl2/MultiMaterial.h \
@@ -44,13 +47,15 @@ libgraphics_a_SOURCES = \
 	Frustum.cpp \
 	Light.cpp \
 	Material.cpp \
-	StaticMesh.cpp \
 	VertexArray.cpp \
 	TextureGL.cpp \
 	TextureBuilder.cpp \
 	Drawables.cpp \
+	VertexBuffer.cpp \
 	gl2/GL2Material.cpp \
+	gl2/GL2RenderState.cpp \
 	gl2/GL2RenderTarget.cpp \
+	gl2/GL2VertexBuffer.cpp \
 	gl2/FresnelColourMaterial.cpp \
 	gl2/GeoSphereMaterial.cpp \
 	gl2/MultiMaterial.cpp \

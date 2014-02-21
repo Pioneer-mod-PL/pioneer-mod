@@ -1,3 +1,6 @@
+-- Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
+-- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+
 local f = Faction:new('Konfederacja Niepodległych Systemów')
 	:description_short('Socjaldemokratyczne zgrupowanie niepodległych Systemów Gwiezdnych')
 	:description('Socjaldemokratyczne zgrupowanie niepodległych Systemów Gwiezdnych, no nie wiem, uznano ich ponieważ wydają się mocno zaangażowani politycznie.')

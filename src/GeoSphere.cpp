@@ -26,7 +26,7 @@ static const int detail_edgeLen[5] = {
 	7, 15, 25, 35, 55
 };
 
-#define PRINT_VECTOR(_v) printf("%f,%f,%f\n", (_v).x, (_v).y, (_v).z);
+#define PRINT_VECTOR(_v) Output("%f,%f,%f\n", (_v).x, (_v).y, (_v).z);
 
 static const int geo_sphere_edge_friends[NUM_PATCHES][4] = {
 	{ 3, 4, 1, 2 },
@@ -53,12 +53,12 @@ void GeoSphere::Uninit()
 
 static void print_info(const SystemBody *sbody, const Terrain *terrain)
 {
-	printf(
+	Output(
 		"%s:\n"
 		"    height fractal: %s\n"
 		"    colour fractal: %s\n"
 		"    seed: %u\n",
-		sbody->name.c_str(), terrain->GetHeightFractalName(), terrain->GetColorFractalName(), sbody->seed);
+		sbody->GetName().c_str(), terrain->GetHeightFractalName(), terrain->GetColorFractalName(), sbody->GetSeed());
 }
 
 // static
@@ -94,7 +94,7 @@ bool GeoSphere::OnAddQuadSplitResult(const SystemPath &path, SQuadSplitResult *r
 {
 	// Find the correct GeoSphere via it's system path, and give it the split result
 	for(std::vector<GeoSphere*>::iterator i=s_allGeospheres.begin(), iEnd=s_allGeospheres.end(); i!=iEnd; ++i) {
-		if( path == (*i)->m_sbody->path ) {
+		if( path == (*i)->m_sbody->GetPath() ) {
 			(*i)->AddQuadSplitResult(res);
 			return true;
 		}
@@ -112,7 +112,7 @@ bool GeoSphere::OnAddSingleSplitResult(const SystemPath &path, SSingleSplitResul
 {
 	// Find the correct GeoSphere via it's system path, and give it the split result
 	for(std::vector<GeoSphere*>::iterator i=s_allGeospheres.begin(), iEnd=s_allGeospheres.end(); i!=iEnd; ++i) {
-		if( path == (*i)->m_sbody->path ) {
+		if( path == (*i)->m_sbody->GetPath() ) {
 			(*i)->AddSingleSplitResult(res);
 			return true;
 		}
@@ -311,7 +311,8 @@ void GeoSphere::BuildFirstPatches()
 static const float g_ambient[4] = { 0, 0, 0, 1.0 };
 
 static void DrawAtmosphereSurface(Graphics::Renderer *renderer,
-	const matrix4x4d &modelView, const vector3d &campos, float rad, Graphics::Material *mat)
+	const matrix4x4d &modelView, const vector3d &campos, float rad,
+	Graphics::RenderState *rs, Graphics::Material *mat)
 {
 	const int LAT_SEGS = 20;
 	const int LONG_SEGS = 20;
@@ -345,7 +346,7 @@ static void DrawAtmosphereSurface(Graphics::Renderer *renderer,
 			cos(latDiff),
 			-sin(latDiff)*sinCosTable[i][1]));
 	}
-	renderer->DrawTriangles(&va, mat, Graphics::TRIANGLE_FAN);
+	renderer->DrawTriangles(&va, rs, mat, Graphics::TRIANGLE_FAN);
 
 	/* and wound latitudinal strips */
 	double lat = latDiff;
@@ -359,7 +360,7 @@ static void DrawAtmosphereSurface(Graphics::Renderer *renderer,
 			v.Add(vector3f(sinLat*sinCosTable[i][0], cosLat, -sinLat*sinCosTable[i][1]));
 			v.Add(vector3f(sinLat2*sinCosTable[i][0], cosLat2, -sinLat2*sinCosTable[i][1]));
 		}
-		renderer->DrawTriangles(&v, mat, Graphics::TRIANGLE_STRIP);
+		renderer->DrawTriangles(&v, rs, mat, Graphics::TRIANGLE_STRIP);
 	}
 }
 
@@ -439,14 +440,12 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 		if (m_materialParameters.atmosphere.atmosDensity > 0.0) {
 			m_atmosphereMaterial->specialParameter0 = &m_materialParameters;
 
-			renderer->SetBlendMode(Graphics::BLEND_ALPHA_ONE);
-			renderer->SetDepthWrite(false);
 			// make atmosphere sphere slightly bigger than required so
 			// that the edges of the pixel shader atmosphere jizz doesn't
 			// show ugly polygonal angles
-			DrawAtmosphereSurface(renderer, trans, campos, m_materialParameters.atmosphere.atmosRadius*1.01, m_atmosphereMaterial.get());
-			renderer->SetDepthWrite(true);
-			renderer->SetBlendMode(Graphics::BLEND_SOLID);
+			DrawAtmosphereSurface(renderer, trans, campos,
+				m_materialParameters.atmosphere.atmosRadius*1.01,
+				m_atmosRenderState, m_atmosphereMaterial.get());
 		}
 	}
 
@@ -456,13 +455,13 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	// save old global ambient
 	const Color oldAmbient = renderer->GetAmbientColor();
 
-	if ((m_sbody->GetSuperType() == SystemBody::SUPERTYPE_STAR) || (m_sbody->type == SystemBody::TYPE_BROWN_DWARF)) {
+	if ((m_sbody->GetSuperType() == SystemBody::SUPERTYPE_STAR) || (m_sbody->GetType() == SystemBody::TYPE_BROWN_DWARF)) {
 		// stars should emit light and terrain should be visible from distance
 		ambient.r = ambient.g = ambient.b = 51;
 		ambient.a = 255;
-		emission.r = StarSystem::starRealColors[m_sbody->type][0];
-		emission.g = StarSystem::starRealColors[m_sbody->type][1];
-		emission.b = StarSystem::starRealColors[m_sbody->type][2];
+		emission.r = StarSystem::starRealColors[m_sbody->GetType()][0];
+		emission.g = StarSystem::starRealColors[m_sbody->GetType()][1];
+		emission.b = StarSystem::starRealColors[m_sbody->GetType()][2];
 		emission.a = 255;
 	}
 
@@ -478,13 +477,11 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	}
 
 	renderer->SetAmbientColor(ambient);
-//#define USE_WIREFRAME
-#ifdef USE_WIREFRAME
-	renderer->SetWireFrameMode(true);
-#endif
+
 	// this is pretty much the only place where a non-renderer is allowed to call Apply()
 	// to be removed when someone rewrites terrain
 	m_surfaceMaterial->Apply();
+	renderer->SetRenderState(m_surfRenderState);
 
 	renderer->SetTransform(modelView);
 
@@ -492,9 +489,8 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	for (int i=0; i<NUM_PATCHES; i++) {
+	for (int i=0; i<NUM_PATCHES; i++)
 		m_patches[i]->Render(renderer, campos, modelView, frustum);
-	}
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -506,13 +502,19 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	m_surfaceMaterial->Unapply();
 
 	renderer->SetAmbientColor(oldAmbient);
-#ifdef USE_WIREFRAME
-	renderer->SetWireFrameMode(false);
-#endif
 }
 
 void GeoSphere::SetUpMaterials()
 {
+	//solid
+	Graphics::RenderStateDesc rsd;
+	m_surfRenderState = Pi::renderer->CreateRenderState(rsd);
+
+	//blended
+	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
+	rsd.depthWrite = false;
+	m_atmosRenderState = Pi::renderer->CreateRenderState(rsd);
+
 	// Request material for this star or planet, with or without
 	// atmosphere. Separate material for surface and sky.
 	Graphics::MaterialDescriptor surfDesc;
@@ -524,8 +526,8 @@ void GeoSphere::SetUpMaterials()
 	else
 		surfDesc.effect = Graphics::EFFECT_GEOSPHERE_TERRAIN;
 
-	if ((m_sbody->type == SystemBody::TYPE_BROWN_DWARF) ||
-		(m_sbody->type == SystemBody::TYPE_STAR_M)) {
+	if ((m_sbody->GetType() == SystemBody::TYPE_BROWN_DWARF) ||
+		(m_sbody->GetType() == SystemBody::TYPE_STAR_M)) {
 		//dim star (emits and receives light)
 		surfDesc.lighting = true;
 		surfDesc.quality &= ~Graphics::HAS_ATMOSPHERE;

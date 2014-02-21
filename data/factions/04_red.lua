@@ -1,6 +1,9 @@
+-- Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
+-- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+
 local f = Faction:new('Czerwoni')
 	:description_short('Nie Niebiescy')
-	:description('CZERWONA drużyna nie jest Niebieska')
+	:description('CZERWONA drużyna nie jest niebieska')
 	:homeworld(4,-9,-17,0,21)
 	:foundingDate(3150.0)
 	:expansionRate(3.0)
