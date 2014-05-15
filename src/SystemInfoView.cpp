@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Pi.h"
+#include "galaxy/Galaxy.h"
 #include "galaxy/Sector.h"
 #include "SectorView.h"
 #include "SystemInfoView.h"
@@ -125,9 +126,9 @@ void SystemInfoView::OnBodyViewed(SystemBody *b)
 		}
 		int numSurfaceStarports = 0;
 		std::string nameList;
-		for (auto i = b->ChildrenBegin(); i != b->ChildrenEnd(); ++i) {
-			if ((*i)->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
-				nameList += (numSurfaceStarports ? ", " : "") + (*i)->GetName();
+		for (const SystemBody* kid : b->GetChildren()) {
+			if (kid->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
+				nameList += (numSurfaceStarports ? ", " : "") + kid->GetName();
 				numSurfaceStarports++;
 			}
 		}
@@ -226,14 +227,14 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 	if (body->GetType() != SystemBody::TYPE_GRAVPOINT) {
 		BodyIcon *ib = new BodyIcon(body->GetIcon(), m_renderer);
 		if (body->GetSuperType() == SystemBody::SUPERTYPE_ROCKY_PLANET) {
-			for (auto i = body->ChildrenBegin(); i != body->ChildrenEnd(); ++i) {
-				if ((*i)->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
+			for (const SystemBody* kid : body->GetChildren()) {
+				if (kid->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
 					ib->SetHasStarport();
 					break;
 				}
 			}
 		}
-		m_bodyIcons.push_back(std::pair<std::string, BodyIcon*>(body->GetName(), ib));
+		m_bodyIcons.push_back(std::pair<Uint32, BodyIcon*>(body->GetPath().bodyIndex, ib));
 		ib->GetSize(size);
 		if (prevSize < 0) prevSize = size[!dir];
 		ib->onSelect.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodySelected), body));
@@ -254,8 +255,8 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 	}
 
 	float prevSizeForKids = size[!dir];
-	for (auto i = body->ChildrenBegin(); i != body->ChildrenEnd(); ++i) {
-		PutBodies(*i, container, dir, myPos, majorBodies, starports, onSurface, prevSizeForKids);
+	for (SystemBody* kid : body->GetChildren()) {
+		PutBodies(kid, container, dir, myPos, majorBodies, starports, onSurface, prevSizeForKids);
 	}
 }
 
@@ -277,7 +278,7 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	if (!path.HasValidSystem())
 		return;
 
-	m_system = StarSystemCache::GetCached(path);
+	m_system = Pi::GetGalaxy()->GetStarSystem(path);
 
 	m_sbodyInfoTab = new Gui::Fixed(float(Gui::Screen::GetWidth()), float(Gui::Screen::GetHeight()-100));
 
@@ -311,17 +312,17 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 		float pos[2] = { 0, 0 };
 		float psize = -1;
 		majorBodies = starports = onSurface = 0;
-		PutBodies(m_system->m_rootBody.Get(), m_econInfoTab, 1, pos, majorBodies, starports, onSurface, psize);
+		PutBodies(m_system->GetRootBody().Get(), m_econInfoTab, 1, pos, majorBodies, starports, onSurface, psize);
 
 		majorBodies = starports = onSurface = 0;
 		pos[0] = pos[1] = 0;
 		psize = -1;
-		PutBodies(m_system->m_rootBody.Get(), m_sbodyInfoTab, 1, pos, majorBodies, starports, onSurface, psize);
+		PutBodies(m_system->GetRootBody().Get(), m_sbodyInfoTab, 1, pos, majorBodies, starports, onSurface, psize);
 
 		majorBodies = starports = onSurface = 0;
 		pos[0] = pos[1] = 0;
 		psize = -1;
-		PutBodies(m_system->m_rootBody.Get(), demographicsTab, 1, pos, majorBodies, starports, onSurface, psize);
+		PutBodies(m_system->GetRootBody().Get(), demographicsTab, 1, pos, majorBodies, starports, onSurface, psize);
 	}
 
 	std::string _info = stringf(
@@ -505,27 +506,27 @@ void SystemInfoView::UpdateIconSelections()
 {
 	m_selectedBodyPath = SystemPath();
 
-	for (std::vector<std::pair<std::string, BodyIcon*> >::iterator it = m_bodyIcons.begin();
-		 it != m_bodyIcons.end(); ++it) {
+	for (auto& bodyIcon : m_bodyIcons) {
 
-		(*it).second->SetSelected(false);
+		bodyIcon.second->SetSelected(false);
 
 		RefCountedPtr<StarSystem> currentSys = Pi::game->GetSpace()->GetStarSystem();
 		if (currentSys && currentSys->GetPath() == m_system->GetPath()) {
 			//navtarget can be only set in current system
-			Body *navtarget = Pi::player->GetNavTarget();
-			if (navtarget && (*it).first == navtarget->GetLabel()) {
-			    (*it).second->SetSelectColor(Color(0, 255, 0, 255));
-				(*it).second->SetSelected(true);
-				m_selectedBodyPath = navtarget->GetSystemBody()->GetPath();
+			if (Body* navtarget = Pi::player->GetNavTarget()) {
+				const SystemPath& navpath = navtarget->GetSystemBody()->GetPath();
+				if (bodyIcon.first == navpath.bodyIndex) {
+					bodyIcon.second->SetSelectColor(Color(0, 255, 0, 255));
+					bodyIcon.second->SetSelected(true);
+					m_selectedBodyPath = navpath;
+				}
 			}
 		} else {
 			SystemPath selected = Pi::sectorView->GetSelected();
 			if (selected.IsSameSystem(m_system->GetPath()) && !selected.IsSystemPath()) {
-				SystemBody *sbody = m_system->GetBodyByPath(selected);
-				if ((*it).first == sbody->GetName()) {
-					(*it).second->SetSelectColor(Color(64, 96, 255, 255));
-					(*it).second->SetSelected(true);
+				if (bodyIcon.first == selected.bodyIndex) {
+					bodyIcon.second->SetSelectColor(Color(64, 96, 255, 255));
+					bodyIcon.second->SetSelected(true);
 					m_selectedBodyPath = selected;
 				}
 			}

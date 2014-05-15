@@ -10,6 +10,7 @@
 #include "Game.h"
 #include "SectorView.h"
 #include "EnumStrings.h"
+#include "galaxy/Galaxy.h"
 
 /*
  * Class: Player
@@ -254,10 +255,10 @@ static int l_set_hyperspace_target(lua_State *l)
 			if (!path.IsBodyPath()) {
 				return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path or the path of a star");
 			}
-			RefCountedPtr<StarSystem> sys = StarSystemCache::GetCached(path);
+			RefCountedPtr<StarSystem> sys = Pi::GetGalaxy()->GetStarSystem(path);
 			// Lua should never be able to get an invalid SystemPath
 			// (note: this may change if it becomes possible to remove systems during the game)
-			assert(size_t(path.bodyIndex) < sys->m_bodies.size());
+			assert(path.bodyIndex < sys->GetNumBodies());
 			SystemBody *sbody = sys->GetBodyByPath(path);
 			if (!sbody->GetSuperType() == SystemBody::SUPERTYPE_STAR)
 				return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path or the path of a star");

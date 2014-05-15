@@ -127,8 +127,13 @@ void Sensors::Update(float time)
 		if (!it->fresh) {
 			m_radarContacts.erase(it++);
 		} else {
-			it->distance = m_owner->GetPositionRelTo(it->body).Length();
-			it->trail->Update(time);
+			const Ship* ship =dynamic_cast<Ship*>(it->body);
+			if (ship && Ship::FLYING==ship->GetFlightState()) {
+				it->distance = m_owner->GetPositionRelTo(it->body).Length();
+				it->trail->Update(time);
+			} else {
+				it->trail->Reset(nullptr);
+			}
 			it->fresh = false;
 			++it;
 		}
@@ -156,10 +161,8 @@ void Sensors::PopulateStaticContacts()
 {
 	m_staticContacts.clear();
 
-	auto start = Pi::game->GetSpace()->BodiesBegin();
-	auto end   = Pi::game->GetSpace()->BodiesEnd();
-	for (auto it = start; it != end; ++it) {
-		switch ((*it)->GetType())
+	for (Body* b : Pi::game->GetSpace()->GetBodies()) {
+		switch (b->GetType())
 		{
 			case Object::STAR:
 			case Object::PLANET:
@@ -169,7 +172,6 @@ void Sensors::PopulateStaticContacts()
 			default:
 				continue;
 		}
-		Body *b = *it;
 		m_staticContacts.push_back(RadarContact(b));
 		RadarContact &rc = m_staticContacts.back();
 		rc.fresh = true;

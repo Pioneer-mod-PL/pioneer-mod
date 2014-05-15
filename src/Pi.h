@@ -20,6 +20,7 @@
 
 class DeathView;
 class GalacticView;
+class Galaxy;
 class Intro;
 class LuaConsole;
 class LuaNameGen;
@@ -62,7 +63,7 @@ class Game;
 
 class Pi {
 public:
-	static void Init(const std::map<std::string,std::string> &options);
+	static void Init(const std::map<std::string,std::string> &options, bool no_gui = false);
 	static void InitGame();
 	static void StarportStart(Uint32 starport);
 	static void StartGame();
@@ -123,7 +124,6 @@ public:
 	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
 	static sigc::signal<void> onPlayerChangeFlightControlState;
 	static sigc::signal<void> onPlayerChangeEquipment;
-	static sigc::signal<void, const SpaceStation*> onDockingClearanceExpired;
 
 	static LuaSerializer *luaSerializer;
 	static LuaTimer *luaTimer;
@@ -174,7 +174,10 @@ public:
 	static struct DetailLevel detail;
 	static GameConfig *config;
 
-	static JobQueue *Jobs() { return jobQueue.get();}
+	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get();}
+	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get();}
+
+	static Galaxy* GetGalaxy() { return s_galaxy; }
 
 	static bool DrawGUI;
 
@@ -182,8 +185,11 @@ private:
 	static void HandleEvents();
 	static void InitJoysticks();
 
-	static std::unique_ptr<JobQueue> jobQueue;
+	static const Uint32 SYNC_JOBS_PER_LOOP = 1;
+	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
+	static std::unique_ptr<SyncJobQueue> syncJobQueue;
 
+	static Galaxy* s_galaxy;
 	static bool menuDone;
 
 	static View *currentView;

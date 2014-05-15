@@ -4,6 +4,7 @@
 #include "SystemView.h"
 #include "Pi.h"
 #include "SectorView.h"
+#include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
 #include "Lang.h"
 #include "StringF.h"
@@ -249,18 +250,18 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 		PutSelectionBox(offset + playerOrbit.OrbitalPosAtTime(m_time - t0)* double(m_zoom), Color::RED);
 	}
 
-	if (b->GetNumChildren() > 0) {
-		for(auto kid = b->ChildrenBegin(); kid != b->ChildrenEnd(); ++kid) {
-			if (is_zero_general((*kid)->GetOrbit().GetSemiMajorAxis())) continue;
-			if ((*kid)->GetOrbit().GetSemiMajorAxis() * m_zoom < ROUGH_SIZE_OF_TURD) {
-				PutOrbit(&((*kid)->GetOrbit()), offset, Color(0, 255, 0, 255));
+	if (b->HasChildren()) {
+		for(const SystemBody* kid : b->GetChildren()) {
+			if (is_zero_general(kid->GetOrbit().GetSemiMajorAxis())) continue;
+			if (kid->GetOrbit().GetSemiMajorAxis() * m_zoom < ROUGH_SIZE_OF_TURD) {
+				PutOrbit(&(kid->GetOrbit()), offset, Color(0, 255, 0, 255));
 			}
 
 			// not using current time yet
-			vector3d pos = (*kid)->GetOrbit().OrbitalPosAtTime(m_time);
+			vector3d pos = kid->GetOrbit().OrbitalPosAtTime(m_time);
 			pos *= double(m_zoom);
 
-			PutBody(*kid, offset + pos, trans);
+			PutBody(kid, offset + pos, trans);
 		}
 	}
 }
@@ -341,7 +342,7 @@ void SystemView::Draw3D()
 	std::string t = Lang::TIME_POINT+format_date(m_time);
 	m_timePoint->SetText(t);
 
-	if (!m_system) m_system = StarSystemCache::GetCached(path);
+	if (!m_system) m_system = Pi::GetGalaxy()->GetStarSystem(path);
 
 	matrix4x4f trans = matrix4x4f::Identity();
 	trans.Translate(0,0,-ROUGH_SIZE_OF_TURD);
@@ -355,8 +356,8 @@ void SystemView::Draw3D()
 	m_objectLabels->Clear();
 	if (m_system->GetUnexplored())
 		m_infoLabel->SetText(Lang::UNEXPLORED_SYSTEM_NO_SYSTEM_VIEW);
-	else if (m_system->m_rootBody) {
-		PutBody(m_system->m_rootBody.Get(), pos, trans);
+	else if (m_system->GetRootBody()) {
+		PutBody(m_system->GetRootBody().Get(), pos, trans);
 		if (Pi::game->GetSpace()->GetStarSystem() == m_system) {
 			const Body *navTarget = Pi::player->GetNavTarget();
 			const SystemBody *navTargetSystemBody = navTarget ? navTarget->GetSystemBody() : 0;

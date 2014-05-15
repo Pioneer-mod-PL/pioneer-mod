@@ -7,13 +7,15 @@
 #include "EnumStrings.h"
 #include "LuaEvent.h"
 #include "Missile.h"
+#include "Player.h"
 #include "Projectile.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
 #include "Sound.h"
 #include "Sfx.h"
+#include "galaxy/Galaxy.h"
 #include "galaxy/Sector.h"
-#include "galaxy/SectorCache.h"
+#include "galaxy/GalaxyCache.h"
 #include "Frame.h"
 #include "WorldView.h"
 #include "HyperspaceCloud.h"
@@ -126,6 +128,8 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 
 	m_hyperspace.dest = SystemPath::Unserialize(rd);
 	m_hyperspace.countdown = rd.Float();
+	m_hyperspace.ignoreFuel = false; // XXX maybe should be stored in savegame, but better than not initializing anyway
+	m_hyperspace.duration = 0;
 
 	for (int i=0; i<ShipType::GUNMOUNT_MAX; i++) {
 		m_gun[i].state = rd.Int32();
@@ -411,7 +415,10 @@ bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
 	}
 
 	// hitting cargo scoop surface shouldn't do damage
-	if ((m_equipment.Get(Equip::SLOT_CARGOSCOOP) != Equip::NONE) && b->IsType(Object::CARGOBODY) && m_stats.free_capacity) {
+	if ((m_equipment.Get(Equip::SLOT_CARGOSCOOP) != Equip::NONE) &&
+			b->IsType(Object::CARGOBODY) &&
+			!dynamic_cast<Body*>(b)->IsDead() &&
+			m_stats.free_capacity) {
 		Equip::Type item = dynamic_cast<CargoBody*>(b)->GetCargoType();
 		Pi::game->GetSpace()->KillBody(dynamic_cast<Body*>(b));
 		m_equipment.Add(item);
@@ -455,8 +462,10 @@ void Ship::Explode()
 	if (m_invulnerable) return;
 
 	Pi::game->GetSpace()->KillBody(this);
-	Sfx::Add(this, Sfx::TYPE_EXPLOSION);
-	Sound::BodyMakeNoise(this, "Explosion_1", 1.0f);
+	if (this->GetFrame() == Pi::player->GetFrame()) {
+		Sfx::AddExplosion(this, Sfx::TYPE_EXPLOSION);
+		Sound::BodyMakeNoise(this, "Explosion_1", 1.0f);
+	}
 	ClearThrusterState();
 }
 
@@ -579,8 +588,8 @@ static float distance_to_system(const SystemPath &src, const SystemPath &dest)
 	assert(src.HasValidSystem());
 	assert(dest.HasValidSystem());
 
-	RefCountedPtr<const Sector> sec1 = Sector::cache.GetCached(src);
-	RefCountedPtr<const Sector> sec2 = Sector::cache.GetCached(dest);
+	RefCountedPtr<const Sector> sec1 = Pi::GetGalaxy()->GetSector(src);
+	RefCountedPtr<const Sector> sec2 = Pi::GetGalaxy()->GetSector(dest);
 
 	return Sector::DistanceBetween(sec1, src.systemIndex, sec2, dest.systemIndex);
 }
@@ -967,6 +976,7 @@ void Ship::FireWeapon(int num)
 
 	Polit::NotifyOfCrime(this, Polit::CRIME_WEAPON_DISCHARGE);
 	Sound::BodyMakeNoise(this, "Pulse_Laser", 1.0f);
+	LuaEvent::Queue("onShipFiring", this);
 }
 
 double Ship::GetHullTemperature() const
@@ -1241,8 +1251,9 @@ void Ship::StaticUpdate(const float timeStep)
 
 	//Add smoke trails for missiles on thruster state
 	if (m_type->tag == ShipType::TAG_MISSILE && m_thrusters.z < 0.0 && 0.1*Pi::rng.Double() < timeStep) {
-		vector3d pos = GetOrient() * vector3d(0, 0 , 5);
-		Sfx::AddThrustSmoke(this, Sfx::TYPE_SMOKE, std::min(10.0*GetVelocity().Length()*abs(m_thrusters.z),100.0),pos);
+		const vector3d pos = GetOrient() * vector3d(0, 0 , 5);
+		const float speed = std::min(10.0*GetVelocity().Length()*abs(m_thrusters.z),100.0);
+		Sfx::AddThrustSmoke(this, Sfx::TYPE_SMOKE, speed, pos);
 	}
 }
 
@@ -1328,7 +1339,7 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 		}
 
 		Sfx::ecmParticle->diffuse = c;
-		renderer->DrawPointSprites(100, v, Sfx::additiveAlphaState, Sfx::ecmParticle, 50.f);
+		renderer->DrawPointSprites(100, v, Sfx::additiveAlphaState, Sfx::ecmParticle.get(), 50.f);
 	}
 }
 
@@ -1356,7 +1367,7 @@ void Ship::EnterHyperspace() {
 	// The second one only checks the bare minimum to insure consistency.
 	if (!m_hyperspace.ignoreFuel) {
 
-		const SystemPath dest = GetHyperspaceDest();
+		const SystemPath &dest = GetHyperspaceDest();
 		int fuel_cost;
 
 		Ship::HyperjumpStatus status = CheckHyperspaceTo(dest, fuel_cost, m_hyperspace.duration);
