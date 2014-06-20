@@ -1,9 +1,33 @@
+June 2014
+
+   * Minor changes and tweaks
+     * Don't allow fuel scoop on Kanara civ (#2929)
+     * Faction update to match wiki (#2930)
+     * Proper rocketship icon by Evarchart (#2942)
+     * DDS for all models (#2945)
+
+   * Script and UI API changes
+     * Added scripts to parse ship stats to wiki
+
+   * Fixes
+     * Fix bug/typo that let player fit hyperdrive on lunarshuttle
+     * Fixing (#2656) landing meshes (#2943)
+     * Fix money format overflow (#2939)
+     * New ground cleanup (#2950)
+     * Fix problem with multiple assassination missions not being cleared
+       properly (#2952)
+
+   * Internal Changes
+     * Compress default (#2940)
+
 May 2014
 
    * Minor changes and tweaks
      * In ship repair, since printing reported hull damage with precision
        "%.1f", cap it at 99.9% instead of 100% (#2901)
      * Fix Wave texture problems & missing ModelViewer pointer (#2903)
+     * Hoop station door collision (#2916)
+     * New cursor and mouse flight indicator (#2922)
 
    * Script and UI API changes
      * Added onShipFiring
@@ -12,6 +36,7 @@ May 2014
      * Update the 3rd party libraries to ones built with vs2013 (#2899)
      * Encapsulate custom systems, factions, caches in a Galaxy class (#2893)
      * Fix ill-formed API documentation for Engine (#2757)
+     * No GLU dependency (#2918)
 
    * Fixes
      * Fix cockpit glass opacity (#2907)

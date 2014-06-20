@@ -1,14 +1,14 @@
 -- Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
 -- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-local f = Faction:new('Federacja')
+local f = Faction:new('Federacja Słoneczna')
 	:description_short('Historyczna kolebka ludzkości')
 	:description([[Słońce jest dobrem wspólnym]])
 	:homeworld(0,0,0,0,4)
 	:foundingDate(3050.0)
 	:expansionRate(1.0)
-	:military_name('Siły Kosmiczne Zjednoczonych Narodów')
-	:police_name('Policja')
+	:military_name('Siły Wojskowe F.S.')
+	:police_name('Oddziały Policji F.S.')
 	:colour(0.4,0.4,1.0)
 
 f:govtype_weight('EARTHDEMOC',    60)
