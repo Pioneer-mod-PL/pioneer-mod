@@ -3,7 +3,7 @@
 
 -- example of a custom system directly specifying a faction
 local s = CustomSystem:new('Rondel',{'STAR_M'})
-	:faction('Haber')
+	:faction('Korporacja Haber')
 	:short_desc('Wojskowa Placówka Nasłuchowa')
 	:long_desc([[Ukryte ostrze wymierzone w samo serce Federacji]])
 	:seed(1824351)
